@@ -1,0 +1,6 @@
+cffi==1.14.0
+numpy==1.18.2
+pycparser==2.20
+pydub==0.23.1
+sounddevice==0.3.15
+SoundFile==0.10.3.post1
