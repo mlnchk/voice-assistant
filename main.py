@@ -6,6 +6,9 @@ import sounddevice as sd
 import soundfile as sf
 from silence import remove_silence
 
+class StopAudio(Exception):
+    pass
+
 def int_or_str(text):
     """Helper function for argument parsing."""
     try:
