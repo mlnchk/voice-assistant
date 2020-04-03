@@ -8,7 +8,7 @@ class AppCore(wx.App):
         self.SetTopWindow(mf)
         return True
 
-class gui :
+class element :
 
     def __init__ (self, obj, style = None, child = None):
         self.obj = obj
@@ -42,70 +42,145 @@ class MainFrame (wx.Frame):
         self.__ComposeStatusBar(panel)
 
     def __ComposeWidgets (self, panel):
-        elements = gui(
+        self.elements = element(
             wx.BoxSizer(wx.VERTICAL),
             { 'flag' : wx.ALL | wx.EXPAND, 'border' : 3 },
             [
-                gui(
+                element(
                     wx.BoxSizer(wx.VERTICAL),
                     { 'flag' : wx.ALL | wx.EXPAND, 'border' : 3 },
                     [
-                        gui(wx.StaticText(panel, name = 'SessionNameLabel', label = 'Session name:')),
-                        gui(wx.TextCtrl(panel, name = 'SessionNameTextControl'))
+                        element(wx.StaticText(panel, name = 'SessionNameLabel', label = 'Session name:')),
+                        element(wx.TextCtrl(panel, name = 'SessionNameTextControl'))
                     ]
                 ),
-                gui(
+                element(
                     wx.StaticLine(panel),
                     { 'flag' : wx.LEFT | wx.RIGHT | wx.EXPAND, 'border' : 6 }
                 ),
-                gui(
+                element(
                     wx.BoxSizer(wx.VERTICAL),
                     { 'flag' : wx.ALL | wx.EXPAND, 'border' : 3 },
                     [
-                        gui(wx.StaticText(panel, name = 'InputDeviceLabel', label = 'Input device:')),
-                        gui(wx.Choice(panel, name = 'InputDeviceChoice'))
+                        element(wx.StaticText(panel, name = 'InputDeviceLabel', label = 'Input device:')),
+                        element(wx.Choice(panel, name = 'InputDeviceChoice'))
                     ]
                 ),
-                gui(
+                element(
                     wx.StaticLine(panel),
                     { 'flag' : wx.LEFT | wx.RIGHT | wx.EXPAND, 'border' : 6 }
                 ),
-                gui(
+                element(
                     wx.BoxSizer(wx.HORIZONTAL),
                     { 'proportion' : 1, 'flag' : wx.ALL | wx.EXPAND, 'border' : 3 },
                     [
-                        gui(wx.Button(panel, name = 'recBtn', label = 'record')),
-                        gui(wx.Button(panel, name = 'stopBtn', label = 'stop')),
-                        gui(wx.Button(panel, name = 'playBtn', label = 'play'))
+                        element(wx.Button(panel, name = 'recBtn', label = 'record')),
+                        element(wx.Button(panel, name = 'stopBtn', label = 'stop')),
+                        element(wx.Button(panel, name = 'playBtn', label = 'play'))
                     ]
                 ),
             ]
         )
-        elements.Compose()
-        panel.SetSizer(elements.obj)
+        self.elements.Compose()
+        panel.SetSizer(self.elements.obj)
 
     def __ComposeMenuBar (self, panel):
         mb = self.menuBar = wx.MenuBar()
         
+        self.MENU_BAR_NEW = 0
+        self.MENU_BAR_OPEN = 1
+        self.MENU_BAR_SAVE = 2
+        self.MENU_BAR_SAVE_AS = 3
+        self.MENU_BAR_EXIT = 4
+        self.MENU_BAR_LANGUAGE = 5
+        self.MENU_BAR_ABOUT = 6
+
+        self.MENU_BAR_LANG_EN = 7
+
         menus = [
             (wx.Menu(), 'File'),
             (wx.Menu(), 'Settings'),
             (wx.Menu(), 'Help')
         ]
+        LanguageSubmenu = wx.Menu()
 
-        menus[0][0].Append(0, 'New session', 'Resets for new session')
-        menus[0][0].Append(1, 'Open', 'Opens file for the new session')
-        menus[0][0].Append(2, 'Save', 'Saves current session')
-        menus[0][0].Append(3, 'Save As...', 'Saves current session')
-        menus[0][0].Append(4, kind = wx.ITEM_SEPARATOR)
-        menus[0][0].Append(5, 'Exit', 'Closes the application')
+        self.menuItems = [
+            {
+                'menu' : menus[0][0],
+                'params' : {
+                    'id' : self.MENU_BAR_NEW,
+                    'item' : 'New',
+                    'helpString' : 'Resets for new session'
+                }
+            },
+            {
+                'menu' : menus[0][0],
+                'params' : {
+                    'id' : self.MENU_BAR_OPEN,
+                    'item' : 'Open',
+                    'helpString' : 'Opens file for the new session'
+                }
+            },
+            {
+                'menu' : menus[0][0],
+                'params' : {
+                    'id' : self.MENU_BAR_SAVE,
+                    'item' : 'Save',
+                    'helpString' : 'Saves current session'
+                }
+            },
+            {
+                'menu' : menus[0][0],
+                'params' : {
+                    'id' : self.MENU_BAR_SAVE_AS,
+                    'item' : 'Save As...',
+                    'helpString' : 'Saves current session'
+                }
+            },
+            {
+                'menu' : menus[0][0],
+                'params' : {
+                    'id' : wx.ID_SEPARATOR,
+                    'kind' : wx.ITEM_SEPARATOR
+                }
+            },
+            {
+                'menu' : menus[0][0],
+                'params' : {
+                    'id' : self.MENU_BAR_EXIT,
+                    'item' : 'Exit',
+                    'helpString' : 'Closes the application'
+                }
+            },
+            {
+                'menu' : LanguageSubmenu,
+                'params' : {
+                    'id' : self.MENU_BAR_LANG_EN,
+                    'item' : 'EN',
+                    'helpString' : 'English (UK)'
+                }
+            },
+            {
+                'menu' : menus[1][0],
+                'params' : {
+                    'id' : self.MENU_BAR_LANGUAGE,
+                    'item' : 'Language',
+                    'helpString' : 'Localization',
+                    'subMenu' : LanguageSubmenu
+                }
+            },
+            {
+                'menu' : menus[2][0],
+                'params' : {
+                    'id' : self.MENU_BAR_ABOUT,
+                    'item' : 'About',
+                    'helpString' : 'About the application'
+                }
+            }
+        ]
 
-        settingsLanguageMenu = wx.Menu()
-        settingsLanguageMenu.Append(6, 'EN', 'English (UK/US)')
-
-        menus[1][0].Append(7, 'Language', settingsLanguageMenu, 'Localization')
-
-        menus[2][0].Append(8, 'About', 'About the application')
+        for menuItem in self.menuItems:
+            menuItem['object'] = menuItem['menu'].Append(**menuItem['params'])
 
         mb.SetMenus(menus)
 
@@ -120,9 +195,27 @@ class MainFrame (wx.Frame):
         self.SetStatusBar(sb)
 
     def __Bind(self):
-        #panel = self.panel
-
+        panel = self.panel
+        self.__BindWidgets(panel)
+        self.__BindMenus(panel)
         self.Bind(wx.EVT_PAINT, self.__OnRepaint)
+
+    def __BindWidgets(self, panel):
+        return
+
+    def __BindMenus(self, panel):
+        menuHandlers = {
+            self.MENU_BAR_EXIT : self.__Exit
+        }
+
+        for menuItem in self.menuItems:
+            obj = menuItem['object']
+            id = obj.GetId()
+            if id in menuHandlers:
+                self.Bind(wx.EVT_MENU, menuHandlers[id], obj)
+
+    def __Exit(self, event):
+        self.Close()
 
     def __OnRepaint (self, event):
         #self.__SetContent(self.panel)
