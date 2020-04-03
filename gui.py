@@ -209,6 +209,9 @@ class MainFrame (wx.Frame):
         sb.SetStatusText('0:00', 1)
         self.SetStatusBar(sb)
 
+    def __SetContent (self):
+        panel = self.panel
+
     def __Bind(self):
         panel = self.panel
         self.__BindWidgets(panel)
@@ -257,8 +260,8 @@ class MainFrame (wx.Frame):
 
         def __init__(self, parent):
             super().__init__(parent = parent,
-                               title = 'About',
-                               style = wx.CAPTION)
+                             title = 'About',
+                             style = wx.CAPTION)
             self.__InitUI()
             self.__Bind()
 
@@ -276,7 +279,7 @@ class MainFrame (wx.Frame):
                                 wx.StaticBitmap(panel, bitmap = glo.AppIconBitmap)
                             ),
                             element(
-                                wx.StaticText(panel, label = 'The Voice Assistant v0.0.1.', name = 'AboutDialogText')
+                                wx.StaticText(panel, label = 'The Voice Assistant v'+glo.GetVersion(), name = 'AboutDialogText')
                             ),
                             element(
                                 wx.Button(panel, label = 'Close', name = 'AboutDialogCloseButton')
