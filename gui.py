@@ -31,6 +31,9 @@ class MainFrame (wx.Frame):
                           parent = None,
                           style = wx.CAPTION | wx.CLOSE_BOX | wx.MINIMIZE_BOX)
         self.SetTitle('Voice Assistant')
+        self.__InitUI()
+
+    def __InitUI (self):
         self.panel = wx.Panel(self)
         self.__SetLayout()
         self.__Bind()
@@ -199,6 +202,7 @@ class MainFrame (wx.Frame):
         self.__BindWidgets(panel)
         self.__BindMenus(panel)
         self.Bind(wx.EVT_PAINT, self.__OnRepaint)
+        self.Bind(wx.EVT_CLOSE, self.__OnClose)
 
     def __BindWidgets(self, panel):
         return
@@ -222,6 +226,16 @@ class MainFrame (wx.Frame):
         sizer = self.panel.GetSizer()
         sizer.Layout()
         sizer.Fit(self)
+
+    def __OnClose(self, event):
+        if event.CanVeto() and False: #self.fileNotSaved:
+            if wx.MessageBox("The file has not been saved... continue closing?",
+                             "Please confirm",
+                             wx.ICON_QUESTION | wx.YES_NO) != wx.YES:
+                event.Veto()
+                return
+
+        self.Destroy()
 
 # test part
 
