@@ -31,7 +31,15 @@ class MainFrame (wx.Frame):
                           parent = None,
                           style = wx.CAPTION | wx.CLOSE_BOX | wx.MINIMIZE_BOX)
         self.SetTitle('Voice Assistant')
+        self.__InitStateFields()
+        self.__InitAboutDialog()
         self.__InitUI()
+
+    def __InitStateFields(self):
+        self.fileOpened = False
+        self.fileChanged = False
+        self.fileSaved = False
+        self.state = 0
 
     def __InitUI (self):
         self.panel = wx.Panel(self)
@@ -209,7 +217,8 @@ class MainFrame (wx.Frame):
 
     def __BindMenus(self, panel):
         menuHandlers = {
-            self.MENU_BAR_EXIT : self.__Exit
+            self.MENU_BAR_EXIT : self.__Exit,
+            self.MENU_BAR_ABOUT: self.__InvokeAboutWindow
         }
 
         for menuItem in self.menuItems:
@@ -221,6 +230,49 @@ class MainFrame (wx.Frame):
     def __Exit(self, event):
         self.Close()
 
+    def __InitAboutDialog(self):
+        a = self.aboutDialog = wx.Dialog(
+            self,
+            title = 'About',
+            style = wx.CAPTION
+        )
+
+        panel = wx.Panel(a)
+        elements = element(
+            wx.BoxSizer(wx.VERTICAL),
+            { 'flag' : wx.ALL, 'border' : 3 },
+            [
+                element(
+                wx.BoxSizer(wx.VERTICAL),
+                { 'flag' : wx.ALL | wx.CENTER, 'border' : 3 },
+                    [
+                        element(
+                            wx.StaticText(panel, label = 'The Voice Assistant v0.0.1.', name = 'AboutDialogText')
+                        ),
+                        element(
+                            wx.StaticText(panel, label = 'The Voice Assistant v0.0.1.', name = 'AboutDialogText')
+                        ),
+                        element(
+                            wx.Button(panel, label = 'Close', name = 'AboutDialogCloseButton')
+                        )
+                    ]
+                )
+            ]
+        )
+        elements.Compose()
+        panel.SetSizer(elements.obj)
+
+        def OnRepaint(event):
+            elements.obj.Fit(a)
+        def CloseButtonClicked(event):
+            a.EndModal(wx.ID_OK)
+
+        a.Bind(wx.EVT_PAINT, OnRepaint)
+        a.Bind(wx.EVT_BUTTON, CloseButtonClicked)
+
+    def __InvokeAboutWindow(self, event):
+        self.aboutDialog.ShowModal()
+
     def __OnRepaint (self, event):
         #self.__SetContent(self.panel)
         sizer = self.panel.GetSizer()
@@ -228,7 +280,7 @@ class MainFrame (wx.Frame):
         sizer.Fit(self)
 
     def __OnClose(self, event):
-        if event.CanVeto() and False: #self.fileNotSaved:
+        if event.CanVeto() and (self.fileChanged and not self.fileSaved):
             if wx.MessageBox("The file has not been saved... continue closing?",
                              "Please confirm",
                              wx.ICON_QUESTION | wx.YES_NO) != wx.YES:
