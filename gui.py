@@ -1,8 +1,10 @@
 import wx
+import globals as glo
 
 class AppCore(wx.App):
     
     def OnInit(self):
+        glo.LoadResources()
         mf = MainFrame()
         self.SetTopWindow(mf)
         mf.Show()
@@ -31,6 +33,8 @@ class MainFrame (wx.Frame):
                           parent = None,
                           style = wx.CAPTION | wx.CLOSE_BOX | wx.MINIMIZE_BOX)
         self.SetTitle('Voice Assistant')
+        self.icon = wx.Icon(glo.AppIconBitmap)
+        self.SetIcon(self.icon)
         self.aboutDialog = self.AboutDialog(self)
         self.__InitStateFields()
         self.__InitUI()
@@ -269,7 +273,7 @@ class MainFrame (wx.Frame):
                     { 'flag' : wx.ALL | wx.CENTER, 'border' : 3 },
                         [
                             element(
-                                wx.StaticText(panel, label = 'The Voice Assistant v0.0.1.', name = 'AboutDialogText')
+                                wx.StaticBitmap(panel, bitmap = glo.AppIconBitmap)
                             ),
                             element(
                                 wx.StaticText(panel, label = 'The Voice Assistant v0.0.1.', name = 'AboutDialogText')
