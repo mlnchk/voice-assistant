@@ -1,5 +1,10 @@
 {
-    "frame":{
-        "title":"Voice Assistant"
+    "text": {
+        "main_frame_title": {
+            "en":"Voice Assistant"
+        },
+        "about_title": {
+            "en":"About"
+        }
     }
 }

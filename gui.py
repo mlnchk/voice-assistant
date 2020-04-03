@@ -4,8 +4,8 @@ class AppCore(wx.App):
     
     def OnInit(self):
         mf = MainFrame()
-        mf.Show()
         self.SetTopWindow(mf)
+        mf.Show()
         return True
 
 class element :
