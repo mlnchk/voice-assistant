@@ -31,8 +31,8 @@ class MainFrame (wx.Frame):
                           parent = None,
                           style = wx.CAPTION | wx.CLOSE_BOX | wx.MINIMIZE_BOX)
         self.SetTitle('Voice Assistant')
+        self.aboutDialog = self.AboutDialog(self)
         self.__InitStateFields()
-        self.__InitAboutDialog()
         self.__InitUI()
 
     def __InitStateFields(self):
@@ -230,46 +230,6 @@ class MainFrame (wx.Frame):
     def __Exit(self, event):
         self.Close()
 
-    def __InitAboutDialog(self):
-        a = self.aboutDialog = wx.Dialog(
-            self,
-            title = 'About',
-            style = wx.CAPTION
-        )
-
-        panel = wx.Panel(a)
-        elements = element(
-            wx.BoxSizer(wx.VERTICAL),
-            { 'flag' : wx.ALL, 'border' : 3 },
-            [
-                element(
-                wx.BoxSizer(wx.VERTICAL),
-                { 'flag' : wx.ALL | wx.CENTER, 'border' : 3 },
-                    [
-                        element(
-                            wx.StaticText(panel, label = 'The Voice Assistant v0.0.1.', name = 'AboutDialogText')
-                        ),
-                        element(
-                            wx.StaticText(panel, label = 'The Voice Assistant v0.0.1.', name = 'AboutDialogText')
-                        ),
-                        element(
-                            wx.Button(panel, label = 'Close', name = 'AboutDialogCloseButton')
-                        )
-                    ]
-                )
-            ]
-        )
-        elements.Compose()
-        panel.SetSizer(elements.obj)
-
-        def OnRepaint(event):
-            elements.obj.Fit(a)
-        def CloseButtonClicked(event):
-            a.EndModal(wx.ID_OK)
-
-        a.Bind(wx.EVT_PAINT, OnRepaint)
-        a.Bind(wx.EVT_BUTTON, CloseButtonClicked)
-
     def __InvokeAboutWindow(self, event):
         self.aboutDialog.ShowModal()
 
@@ -288,6 +248,53 @@ class MainFrame (wx.Frame):
                 return
 
         self.Destroy()
+    
+    class AboutDialog(wx.Dialog):
+
+        def __init__(self, parent):
+            super().__init__(parent = parent,
+                               title = 'About',
+                               style = wx.CAPTION)
+            self.__InitUI()
+            self.__Bind()
+
+        def __InitUI(self):
+            panel = self.panel = wx.Panel(self)
+            elements = element(
+                wx.BoxSizer(wx.VERTICAL),
+                { 'flag' : wx.ALL, 'border' : 3 },
+                [
+                    element(
+                    wx.BoxSizer(wx.VERTICAL),
+                    { 'flag' : wx.ALL | wx.CENTER, 'border' : 3 },
+                        [
+                            element(
+                                wx.StaticText(panel, label = 'The Voice Assistant v0.0.1.', name = 'AboutDialogText')
+                            ),
+                            element(
+                                wx.StaticText(panel, label = 'The Voice Assistant v0.0.1.', name = 'AboutDialogText')
+                            ),
+                            element(
+                                wx.Button(panel, label = 'Close', name = 'AboutDialogCloseButton')
+                            )
+                    ]   
+                    )
+                ]
+            )
+            elements.Compose()
+            panel.SetSizer(elements.obj)
+
+        def __Bind(self):
+            self.Bind(wx.EVT_PAINT, self.__OnRepaint)
+            self.Bind(wx.EVT_BUTTON, self.__CloseBtnClick)
+
+        def __OnRepaint(self, event):
+            sizer = self.panel.GetSizer()
+            sizer.Layout()
+            sizer.Fit(self)
+
+        def __CloseBtnClick(self, event):
+            self.EndModal(wx.ID_OK)
 
 # test part
 
