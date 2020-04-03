@@ -8,7 +8,8 @@ class AppCore(wx.App):
         self.SetTopWindow(mf)
         return True
 
-class gui ():
+class gui :
+
     def __init__ (self, obj, style = None, child = None):
         self.obj = obj
         self.style = style
@@ -36,7 +37,11 @@ class MainFrame (wx.Frame):
 
     def __SetLayout (self):
         panel = self.panel
+        self.__ComposeWidgets(panel)
+        self.__ComposeMenuBar(panel)
+        self.__ComposeStatusBar(panel)
 
+    def __ComposeWidgets (self, panel):
         elements = gui(
             wx.BoxSizer(wx.VERTICAL),
             { 'flag' : wx.ALL | wx.EXPAND, 'border' : 3 },
@@ -77,11 +82,42 @@ class MainFrame (wx.Frame):
             ]
         )
         elements.Compose()
-
         panel.SetSizer(elements.obj)
 
-        sb = self.CreateStatusBar(name = 'statusBar')
-        sb.SetStatusText('Sample state')
+    def __ComposeMenuBar (self, panel):
+        mb = self.menuBar = wx.MenuBar()
+        
+        menus = [
+            (wx.Menu(), 'File'),
+            (wx.Menu(), 'Settings'),
+            (wx.Menu(), 'Help')
+        ]
+
+        menus[0][0].Append(0, 'New session', 'Resets for new session')
+        menus[0][0].Append(1, 'Open', 'Opens file for the new session')
+        menus[0][0].Append(2, 'Save', 'Saves current session')
+        menus[0][0].Append(3, 'Save As...', 'Saves current session')
+        menus[0][0].Append(4, kind = wx.ITEM_SEPARATOR)
+        menus[0][0].Append(5, 'Exit', 'Closes the application')
+
+        settingsLanguageMenu = wx.Menu()
+        settingsLanguageMenu.Append(6, 'EN', 'English (UK/US)')
+
+        menus[1][0].Append(7, 'Language', settingsLanguageMenu, 'Localization')
+
+        menus[2][0].Append(8, 'About', 'About the application')
+
+        mb.SetMenus(menus)
+
+        self.SetMenuBar(mb)
+    
+    def __ComposeStatusBar (self, panel):
+        sb = self.statusBar = wx.StatusBar(panel, name = 'statusBar')
+        sb.SetFieldsCount(2)
+        sb.SetStatusWidths([-3, -1])
+        sb.SetStatusText('state', 0)
+        sb.SetStatusText('0:00', 1)
+        self.SetStatusBar(sb)
 
     def __Bind(self):
         #panel = self.panel
