@@ -41,11 +41,13 @@ def loadContent():
     if contentFile != None:
         Content = json.loads(contentFile)
 
-def GetVersion():
-    if Content != None:
-        return Content['version']
-    else:
+def Get(what):
+    if Content == None:
         return 'n/a'
+    return Content[what]
+
+def GetVersion():
+    return Get('version')
 
 def GetText(element, lang):
     if Content == None:

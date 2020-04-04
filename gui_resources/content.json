@@ -52,8 +52,15 @@
         "menu_bar_about": {
             "en":["About", "About the application"]
         },
-        "about_title": {
+        "about_frame_title": {
             "en":"About"
+        },
+        "about_dialog_text" : {
+            "en":"The Voice Assistant v",
+            "var":"version"
+        },
+        "about_dialog_close_button" : {
+            "en":"Close"
         }
     }
 }

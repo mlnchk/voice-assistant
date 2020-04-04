@@ -278,10 +278,10 @@ class MainFrame (wx.Frame):
 
         def __init__(self, parent):
             super().__init__(parent = parent,
-                             title = 'About',
                              style = wx.CAPTION)
             self.__InitUI()
             self.__Bind()
+            self.__Update()
 
         def __InitUI(self):
             panel = self.panel = wx.Panel(self)
@@ -297,21 +297,39 @@ class MainFrame (wx.Frame):
                                 wx.StaticBitmap(panel, bitmap = glo.AppIconBitmap)
                             ),
                             element(
-                                wx.StaticText(panel, label = 'The Voice Assistant v'+glo.GetVersion(), name = 'AboutDialogText')
+                                wx.StaticText(panel, name = 'about_dialog_text')
                             ),
                             element(
-                                wx.Button(panel, label = 'Close', name = 'AboutDialogCloseButton')
+                                wx.Button(panel, name = 'about_dialog_close_button')
                             )
-                    ]   
+                        ]   
                     )
                 ]
             )
             elements.Compose()
             panel.SetSizer(elements.obj)
 
+        def __SetContent(self):
+            lang = glo.Settings['lang']
+            self.SetTitle(glo.GetText('about_frame_title', lang))
+            for element in self.panel.GetChildren():
+                name = element.GetName()
+                text = glo.GetText(name, lang)
+                variable = glo.GetText(name, 'var')
+                varstr = ''
+                if variable != 'n/a':
+                    varstr = glo.Get(variable)
+                if text != 'n/a':
+                    element.SetLabel(text + varstr)
+
         def __Bind(self):
             self.Bind(wx.EVT_PAINT, self.__OnRepaint)
             self.Bind(wx.EVT_BUTTON, self.__CloseBtnClick)
+
+        def __Update(self):
+            self.__SetContent()
+            self.Refresh()
+            self.Update()
 
         def __OnRepaint(self, event):
             sizer = self.panel.GetSizer()
