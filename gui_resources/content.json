@@ -4,6 +4,54 @@
         "main_frame_title": {
             "en":"Voice Assistant"
         },
+        "session_name_label": {
+            "en":"Session name:"
+        },
+        "input_device_label": {
+            "en":"Input device:"
+        },
+        "record_button": {
+            "en":"Record"
+        },
+        "stop_button": {
+            "en":"Stop"
+        },
+        "play_button": {
+            "en":"Play"
+        },
+        "menu_file": {
+            "en":"File"
+        },
+        "menu_settings": {
+            "en":"Settings"
+        },
+        "menu_help": {
+            "en":"Help"
+        },
+        "menu_bar_new": {
+            "en":["New", "Resets for new session"]
+        },
+        "menu_bar_open": {
+            "en":["Open", "Opens file for the new session"]
+        },
+        "menu_bar_save": {
+            "en":["Save", "Saves current session"]
+        },
+        "menu_bar_save_as": {
+            "en":["Save As...", "Saves current session"]
+        },
+        "menu_bar_exit": {
+            "en":["Exit", "Closes the application"]
+        },
+        "menu_bar_language_submenu_en": {
+            "en":["EN", "English (UK)"]
+        },
+        "menu_bar_language": {
+            "en":["Language", "App localization"]
+        },
+        "menu_bar_about": {
+            "en":["About", "About the application"]
+        },
         "about_title": {
             "en":"About"
         }

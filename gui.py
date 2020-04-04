@@ -32,12 +32,12 @@ class MainFrame (wx.Frame):
         wx.Frame.__init__(self,
                           parent = None,
                           style = wx.CAPTION | wx.CLOSE_BOX | wx.MINIMIZE_BOX)
-        self.SetTitle('Voice Assistant')
         self.icon = wx.Icon(glo.AppIconBitmap)
         self.SetIcon(self.icon)
         self.aboutDialog = self.AboutDialog(self)
         self.__InitStateFields()
         self.__InitUI()
+        self.__Update()
 
     def __InitStateFields(self):
         self.fileOpened = False
@@ -65,8 +65,8 @@ class MainFrame (wx.Frame):
                     wx.BoxSizer(wx.VERTICAL),
                     { 'flag' : wx.ALL | wx.EXPAND, 'border' : 3 },
                     [
-                        element(wx.StaticText(panel, name = 'SessionNameLabel', label = 'Session name:')),
-                        element(wx.TextCtrl(panel, name = 'SessionNameTextControl'))
+                        element(wx.StaticText(panel, name = 'session_name_label')),
+                        element(wx.TextCtrl(panel, name = 'session_name_text_control'))
                     ]
                 ),
                 element(
@@ -77,8 +77,8 @@ class MainFrame (wx.Frame):
                     wx.BoxSizer(wx.VERTICAL),
                     { 'flag' : wx.ALL | wx.EXPAND, 'border' : 3 },
                     [
-                        element(wx.StaticText(panel, name = 'InputDeviceLabel', label = 'Input device:')),
-                        element(wx.Choice(panel, name = 'InputDeviceChoice'))
+                        element(wx.StaticText(panel, name = 'input_device_label')),
+                        element(wx.Choice(panel, name = 'input_device_choice'))
                     ]
                 ),
                 element(
@@ -89,9 +89,9 @@ class MainFrame (wx.Frame):
                     wx.BoxSizer(wx.HORIZONTAL),
                     { 'proportion' : 1, 'flag' : wx.ALL | wx.EXPAND, 'border' : 3 },
                     [
-                        element(wx.Button(panel, name = 'recBtn', label = 'record')),
-                        element(wx.Button(panel, name = 'stopBtn', label = 'stop')),
-                        element(wx.Button(panel, name = 'playBtn', label = 'play'))
+                        element(wx.Button(panel, name = 'record_button')),
+                        element(wx.Button(panel, name = 'stop_button')),
+                        element(wx.Button(panel, name = 'play_button'))
                     ]
                 ),
             ]
@@ -112,44 +112,41 @@ class MainFrame (wx.Frame):
 
         self.MENU_BAR_LANG_EN = 7
 
-        menus = [
-            (wx.Menu(), 'File'),
-            (wx.Menu(), 'Settings'),
-            (wx.Menu(), 'Help')
+        menus = self.menus = [
+            (wx.Menu(), 'menu_file'),
+            (wx.Menu(), 'menu_settings'),
+            (wx.Menu(), 'menu_help')
         ]
+
         LanguageSubmenu = wx.Menu()
 
         self.menuItems = [
             {
                 'menu' : menus[0][0],
+                'name' : 'menu_bar_new',
                 'params' : {
-                    'id' : self.MENU_BAR_NEW,
-                    'item' : 'New',
-                    'helpString' : 'Resets for new session'
+                    'id' : self.MENU_BAR_NEW
                 }
             },
             {
                 'menu' : menus[0][0],
+                'name' : 'menu_bar_open',
                 'params' : {
-                    'id' : self.MENU_BAR_OPEN,
-                    'item' : 'Open',
-                    'helpString' : 'Opens file for the new session'
+                    'id' : self.MENU_BAR_OPEN
                 }
             },
             {
                 'menu' : menus[0][0],
+                'name' : 'menu_bar_save',
                 'params' : {
-                    'id' : self.MENU_BAR_SAVE,
-                    'item' : 'Save',
-                    'helpString' : 'Saves current session'
+                    'id' : self.MENU_BAR_SAVE
                 }
             },
             {
                 'menu' : menus[0][0],
+                'name' : 'menu_bar_save_as',
                 'params' : {
-                    'id' : self.MENU_BAR_SAVE_AS,
-                    'item' : 'Save As...',
-                    'helpString' : 'Saves current session'
+                    'id' : self.MENU_BAR_SAVE_AS
                 }
             },
             {
@@ -161,43 +158,37 @@ class MainFrame (wx.Frame):
             },
             {
                 'menu' : menus[0][0],
+                'name' : 'menu_bar_exit',
                 'params' : {
-                    'id' : self.MENU_BAR_EXIT,
-                    'item' : 'Exit',
-                    'helpString' : 'Closes the application'
+                    'id' : self.MENU_BAR_EXIT
                 }
             },
             {
                 'menu' : LanguageSubmenu,
+                'name' : 'menu_bar_language_submenu_en',
                 'params' : {
-                    'id' : self.MENU_BAR_LANG_EN,
-                    'item' : 'EN',
-                    'helpString' : 'English (UK)'
+                    'id' : self.MENU_BAR_LANG_EN
                 }
             },
             {
                 'menu' : menus[1][0],
+                'name' : 'menu_bar_language',
                 'params' : {
                     'id' : self.MENU_BAR_LANGUAGE,
-                    'item' : 'Language',
-                    'helpString' : 'Localization',
                     'subMenu' : LanguageSubmenu
                 }
             },
             {
                 'menu' : menus[2][0],
+                'name' : 'menu_bar_about',
                 'params' : {
-                    'id' : self.MENU_BAR_ABOUT,
-                    'item' : 'About',
-                    'helpString' : 'About the application'
+                    'id' : self.MENU_BAR_ABOUT
                 }
             }
         ]
 
         for menuItem in self.menuItems:
-            menuItem['object'] = menuItem['menu'].Append(**menuItem['params'])
-
-        mb.SetMenus(menus)
+            menuItem['object'] = menuItem['menu'].Append(item = 'default', **menuItem['params'])
 
         self.SetMenuBar(mb)
     
@@ -210,7 +201,30 @@ class MainFrame (wx.Frame):
         self.SetStatusBar(sb)
 
     def __SetContent (self):
-        panel = self.panel
+        lang = glo.Settings['lang']
+        self.SetTitle(glo.GetText('main_frame_title', lang))
+        self.__SetWidgetsContent(lang)
+        self.__SetMenuBarContent(lang)
+
+    def __SetWidgetsContent(self, lang):
+        for element in self.panel.GetChildren():
+            name = element.GetName()
+            text = glo.GetText(name, lang)
+            if text != 'n/a':
+                element.SetLabel(text)
+
+    def __SetMenuBarContent(self, lang):
+        menus = []
+        for menu in self.menus:
+            menus.append((menu[0], glo.GetText(menu[1], lang)))
+        for menuItem in self.menuItems:
+            if 'name' in menuItem:
+                name = menuItem['name']
+                text = glo.GetText(name, lang)
+                obj = menuItem['object']
+                obj.SetItemLabel(text[0])
+                obj.SetHelp(text[1])
+        self.menuBar.SetMenus(menus)
 
     def __Bind(self):
         panel = self.panel
@@ -240,8 +254,12 @@ class MainFrame (wx.Frame):
     def __InvokeAboutWindow(self, event):
         self.aboutDialog.ShowModal()
 
+    def __Update(self):
+        self.__SetContent()
+        self.Refresh()
+        self.Update()
+
     def __OnRepaint (self, event):
-        #self.__SetContent(self.panel)
         sizer = self.panel.GetSizer()
         sizer.Layout()
         sizer.Fit(self)

@@ -6,7 +6,7 @@ AppIconBitmap = None
 Content = None
 
 Settings = {
-    'locale' : 'en'
+    'lang' : 'en'
 }
 
 def CheckExisting(filePath):
