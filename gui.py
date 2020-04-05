@@ -1,4 +1,6 @@
 import wx
+import os.path
+import re
 
 import globals as glo
 import AudioRecorder as arec
@@ -6,7 +8,14 @@ import AudioRecorder as arec
 PUBSUB_STOP_MESSAGE = 'stop_record'
 
 def process_path(pathname):
-    return pathname
+    result = os.path.basename(pathname)
+    regexp = glo.Settings['pathname_regexp']
+    if regexp[0]:
+        search_result = re.search(regexp[1], pathname)
+        if search_result is None:
+            return result
+        return search_result.group(regexp[2])
+    return result
 
 class AppCore(wx.App):
 

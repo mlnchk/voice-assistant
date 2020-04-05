@@ -6,7 +6,8 @@ AppIconBitmap = None
 Content = None
 
 Settings = {
-    'lang' : 'en'
+    'lang' : 'en',
+    'pathname_regexp' : (True, r'.*/(.*)_assignsubmission_file_/.*', 1)
 }
 
 def CheckExisting(filePath):
