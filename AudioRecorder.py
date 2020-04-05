@@ -62,7 +62,7 @@ class AudioRecorder:
             parser.exit(type(e).__name__ + ': ' + str(e))
 
     def stop(self):
-        raise StopAudio
+        raise StopAudio()
 
 
 _ = AudioRecorder('test')
