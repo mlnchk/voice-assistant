@@ -10,23 +10,23 @@ class AppCore(wx.App):
         mf.Show()
         return True
 
-class element :
-
-    def __init__ (self, obj, style = None, child = None):
-        self.obj = obj
-        self.style = style
-        self.child = child
-    
-    def Compose(self, parent = None):
-        if self.style == None:
-            self.style = parent.style
-        if self.child != None:
-            for c in self.child:
-                c.Compose(self)
-        if parent != None:
-            parent.obj.Add(self.obj, **self.style)
-
 class MainFrame (wx.Frame):
+
+    class element :
+
+        def __init__ (self, obj, style = None, child = None):
+            self.obj = obj
+            self.style = style
+            self.child = child
+    
+        def Compose(self, parent = None):
+            if self.style == None:
+                self.style = parent.style
+            if self.child != None:
+                for c in self.child:
+                    c.Compose(self)
+            if parent != None:
+                parent.obj.Add(self.obj, **self.style)
 
     def __init__ (self):
         wx.Frame.__init__(self,
@@ -37,7 +37,7 @@ class MainFrame (wx.Frame):
         self.aboutDialog = self.AboutDialog(self)
         self.__InitStateFields()
         self.__InitUI()
-        self.__Update()
+        self.UpdateContent()
 
     def __InitStateFields(self):
         self.fileOpened = False
@@ -57,6 +57,7 @@ class MainFrame (wx.Frame):
         self.__ComposeStatusBar(panel)
 
     def __ComposeWidgets (self, panel):
+        element = self.element
         self.elements = element(
             wx.BoxSizer(wx.VERTICAL),
             { 'flag' : wx.ALL | wx.EXPAND, 'border' : 3 },
@@ -254,10 +255,11 @@ class MainFrame (wx.Frame):
     def __InvokeAboutWindow(self, event):
         self.aboutDialog.ShowModal()
 
-    def __Update(self):
+    def UpdateContent(self):
         self.__SetContent()
         self.Refresh()
         self.Update()
+        self.aboutDialog.UpdateContent()
 
     def __OnRepaint (self, event):
         sizer = self.panel.GetSizer()
@@ -281,10 +283,11 @@ class MainFrame (wx.Frame):
                              style = wx.CAPTION)
             self.__InitUI()
             self.__Bind()
-            self.__Update()
+            self.UpdateContent()
 
         def __InitUI(self):
             panel = self.panel = wx.Panel(self)
+            element = MainFrame.element
             elements = element(
                 wx.BoxSizer(wx.VERTICAL),
                 { 'flag' : wx.ALL, 'border' : 3 },
@@ -326,7 +329,7 @@ class MainFrame (wx.Frame):
             self.Bind(wx.EVT_PAINT, self.__OnRepaint)
             self.Bind(wx.EVT_BUTTON, self.__CloseBtnClick)
 
-        def __Update(self):
+        def UpdateContent(self):
             self.__SetContent()
             self.Refresh()
             self.Update()
