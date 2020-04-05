@@ -471,8 +471,3 @@ class MainFrame (wx.Frame):
 
         def __CloseBtnClick(self, event):
             self.EndModal(wx.ID_OK)
-
-# test part
-
-core = AppCore()
-core.MainLoop()
