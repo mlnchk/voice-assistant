@@ -16,9 +16,8 @@ def int_or_str(text):
     except ValueError:
         return text
 
-def get_devices():
-    devices = sd.query_devices()
-    return devices
+def get_devices(kind = None):
+    return sd.query_devices(kind = kind)
 
 def record_audio():
     try:
