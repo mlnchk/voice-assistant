@@ -311,12 +311,12 @@ class MainFrame (wx.Frame):
                 element.SetLabel(text)
 
     def __SetDevicesList(self, element):
-        # self.devices = audio.get_devices()
-        # devices = [x['name'] for x in self.devices]
-        # element.SetItems(devices)
-        # default = audio.get_devices('input')
-        # n = element.FindString(default['name'], True)
-        # element.SetSelection(n)
+        self.devices = self.recorder.get_devices()
+        devices = [x['name'] for x in self.devices if x['max_input_channels'] > 0]
+        element.SetItems(devices)
+        default = self.recorder.get_device()
+        n = element.FindString(default['name'], True)
+        element.SetSelection(n)
         return
 
     def __SetMenuBarContent(self, lang):
