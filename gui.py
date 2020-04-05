@@ -1,5 +1,4 @@
 import wx
-from threading import Thread
 from pubsub import pub
 
 import globals as glo

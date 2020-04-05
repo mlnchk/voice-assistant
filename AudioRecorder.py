@@ -59,5 +59,4 @@ class AudioRecorder:
         self.loop_thread.start()
 
     def stop(self):
-        print('ass')
         self.__recording = False
