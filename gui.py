@@ -10,6 +10,15 @@ class AppCore(wx.App):
         mf.Show()
         return True
 
+class AutoID :
+
+    def __init__(self):
+        self.id = 0
+        
+    def GetID(self):
+        self.id += 1
+        return self.id
+
 class MainFrame (wx.Frame):
 
     class element :
@@ -33,6 +42,7 @@ class MainFrame (wx.Frame):
                           parent = None,
                           style = wx.CAPTION | wx.CLOSE_BOX | wx.MINIMIZE_BOX)
         self.icon = wx.Icon(glo.AppIconBitmap)
+        self.autoID = AutoID()
         self.SetIcon(self.icon)
         self.aboutDialog = self.AboutDialog(self)
         self.__InitStateFields()
@@ -40,6 +50,14 @@ class MainFrame (wx.Frame):
         self.UpdateContent()
 
     def __InitStateFields(self):
+        self.STATE_RESET = self.autoID.GetID()
+        self.STATE_RECORD = self.autoID.GetID()
+        self.STATE_STOP = self.autoID.GetID()
+        self.STATE_PLAY = self.autoID.GetID()
+        self.STATE_LOADING = self.autoID.GetID()
+
+        self.availableLangs = glo.GetAvailableLanguages()
+
         self.fileOpened = False
         self.fileChanged = False
         self.fileSaved = False
@@ -103,23 +121,22 @@ class MainFrame (wx.Frame):
     def __ComposeMenuBar (self, panel):
         mb = self.menuBar = wx.MenuBar()
         
-        self.MENU_BAR_NEW = 0
-        self.MENU_BAR_OPEN = 1
-        self.MENU_BAR_SAVE = 2
-        self.MENU_BAR_SAVE_AS = 3
-        self.MENU_BAR_EXIT = 4
-        self.MENU_BAR_LANGUAGE = 5
-        self.MENU_BAR_ABOUT = 6
+        self.MENU_BAR_NEW = self.autoID.GetID()
+        self.MENU_BAR_OPEN = self.autoID.GetID()
+        self.MENU_BAR_SAVE = self.autoID.GetID()
+        self.MENU_BAR_SAVE_AS = self.autoID.GetID()
+        self.MENU_BAR_EXIT = self.autoID.GetID()
+        self.MENU_BAR_LANGUAGE = self.autoID.GetID()
+        self.MENU_BAR_ABOUT = self.autoID.GetID()
 
-        self.MENU_BAR_LANG_EN = 7
+        self.MENU_BAR_LANGS = {}
+        LanguageSubmenu = wx.Menu()
 
         menus = self.menus = [
             (wx.Menu(), 'menu_file'),
             (wx.Menu(), 'menu_settings'),
             (wx.Menu(), 'menu_help')
         ]
-
-        LanguageSubmenu = wx.Menu()
 
         self.menuItems = [
             {
@@ -165,13 +182,6 @@ class MainFrame (wx.Frame):
                 }
             },
             {
-                'menu' : LanguageSubmenu,
-                'name' : 'menu_bar_language_submenu_en',
-                'params' : {
-                    'id' : self.MENU_BAR_LANG_EN
-                }
-            },
-            {
                 'menu' : menus[1][0],
                 'name' : 'menu_bar_language',
                 'params' : {
@@ -188,8 +198,25 @@ class MainFrame (wx.Frame):
             }
         ]
 
+        for lang in self.availableLangs:
+            langID = self.autoID.GetID()
+            self.MENU_BAR_LANGS[langID] = lang[0]
+            self.menuItems.append(
+                {
+                    'menu' : LanguageSubmenu,
+                    'params' : {
+                        'id' : langID,
+                        'item' : lang[0],
+                        'helpString' : lang[1]
+                    }
+                }
+            )
+
         for menuItem in self.menuItems:
-            menuItem['object'] = menuItem['menu'].Append(item = 'default', **menuItem['params'])
+            params = menuItem['params']
+            if 'item' not in params:
+                params['item'] = 'default'
+            menuItem['object'] = menuItem['menu'].Append(**params)
 
         self.SetMenuBar(mb)
     
@@ -242,12 +269,21 @@ class MainFrame (wx.Frame):
             self.MENU_BAR_EXIT : self.__Exit,
             self.MENU_BAR_ABOUT: self.__InvokeAboutWindow
         }
+        for lang in self.MENU_BAR_LANGS:
+            menuHandlers[lang] = self.__ChangeLanguage(lang)
 
         for menuItem in self.menuItems:
             obj = menuItem['object']
             id = obj.GetId()
             if id in menuHandlers:
                 self.Bind(wx.EVT_MENU, menuHandlers[id], obj)
+
+    def __ChangeLanguage(self, langID):
+        lang = self.MENU_BAR_LANGS[langID]
+        def cl(event):
+            glo.Settings['lang'] = lang
+            self.UpdateContent()
+        return cl
 
     def __Exit(self, event):
         self.Close()
@@ -257,9 +293,13 @@ class MainFrame (wx.Frame):
 
     def UpdateContent(self):
         self.__SetContent()
+        self.__UpdateState()
         self.Refresh()
         self.Update()
         self.aboutDialog.UpdateContent()
+
+    def __UpdateState(self):
+        return
 
     def __OnRepaint (self, event):
         sizer = self.panel.GetSizer()

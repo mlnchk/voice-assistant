@@ -49,6 +49,9 @@ def Get(what):
 def GetVersion():
     return Get('version')
 
+def GetAvailableLanguages():
+    return Get('langs')
+
 def GetText(element, lang):
     if Content == None:
         return 'n/a'
@@ -57,4 +60,3 @@ def GetText(element, lang):
     if lang not in Content['text'][element]:
         return 'n/a'
     return Content['text'][element][lang]
-        

@@ -1,5 +1,8 @@
 {
     "version":"0.0.4",
+    "langs":[
+        ["en", "English (UK)"]
+    ],
     "text": {
         "main_frame_title": {
             "en":"Voice Assistant"
@@ -42,9 +45,6 @@
         },
         "menu_bar_exit": {
             "en":["Exit", "Closes the application"]
-        },
-        "menu_bar_language_submenu_en": {
-            "en":["EN", "English (UK)"]
         },
         "menu_bar_language": {
             "en":["Language", "App localization"]
