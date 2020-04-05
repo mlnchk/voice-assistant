@@ -2,6 +2,10 @@ import wx
 import globals as glo
 import audio
 
+def process_path(pathname):
+
+    return pathname
+
 class AppCore(wx.App):
     
     def OnInit(self):
@@ -348,6 +352,7 @@ class MainFrame (wx.Frame):
     def __BindMenus(self, panel):
         menuHandlers = {
             self.MENU_BAR_NEW  : self.__Reset,
+            self.MENU_BAR_OPEN : self.__Open,
             self.MENU_BAR_EXIT : self.__Exit,
             self.MENU_BAR_ABOUT: self.__InvokeAboutWindow
         }
@@ -369,6 +374,19 @@ class MainFrame (wx.Frame):
 
     def __Reset(self, event):
         self.__SetState(self.STATE_RESET)
+
+    def __Open(self, event):
+        lang = glo.Settings['lang']
+        with wx.FileDialog(
+            self,
+            glo.GetText('file_open_dialog_title', lang),
+            wildcard = glo.GetText('file_open_dialog_wildcard', lang) + '(*.*)|*.*',
+            style = wx.FD_OPEN | wx.FD_FILE_MUST_EXIST
+        ) as fileDialog:
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return
+            pathname = process_path(fileDialog.GetPath())
+            self.panel.FindWindow('session_name_text_control').SetValue(pathname)
 
     def __Exit(self, event):
         self.Close()

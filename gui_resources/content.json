@@ -52,6 +52,12 @@
         "menu_bar_about": {
             "en":["About", "About the application"]
         },
+        "file_open_dialog_title": {
+            "en":"Open file"
+        },
+        "file_open_dialog_wildcard": {
+            "en":"All files"
+        },
         "about_frame_title": {
             "en":"About"
         },
