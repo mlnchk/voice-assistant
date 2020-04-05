@@ -1,87 +1,110 @@
 {
     "version":"0.0.4",
     "langs":[
-        ["en", "English (UK)"]
+        ["en", "English (UK)"],
+        ["ru", "Русский (Россия)"]
     ],
     "text": {
         "main_frame_title": {
-            "en":"Voice Assistant"
+            "en":"Voice Assistant",
+            "ru":"Голосовой Ассистент"
         },
         "session_name_label": {
-            "en":"Session name:"
+            "en":"Session name:",
+            "ru":"Название сессии:"
         },
         "input_device_label": {
-            "en":"Input device:"
+            "en":"Input device:",
+            "ru":"Устройство ввода:"
         },
         "record_button": {
-            "en":"Record"
+            "en":"Record",
+            "ru":"Запись"
         },
         "stop_button": {
-            "en":"Stop"
-        },
-        "play_button": {
-            "en":"Play"
+            "en":"Stop",
+            "ru":"Стоп"
         },
         "menu_file": {
-            "en":"File"
+            "en":"File",
+            "ru":"Файл"
         },
         "menu_settings": {
-            "en":"Settings"
+            "en":"Settings",
+            "ru":"Настройки"
         },
         "menu_help": {
-            "en":"Help"
+            "en":"Help",
+            "ru":"Помощь"
         },
         "menu_bar_new": {
-            "en":["New", "Resets for new session"]
+            "en":["New", "Resets for new session"],
+            "ru":["Создать", "Создать новую сессию"]
         },
         "menu_bar_open": {
-            "en":["Open", "Opens file for the new session"]
+            "en":["Open", "Opens file for the new session"],
+            "ru":["Открыть", "Открыть файл для сессии"]
         },
         "menu_bar_save": {
-            "en":["Save", "Saves current session"]
+            "en":["Save", "Saves current session"],
+            "ru":["Сохранить", "Сохранить текущую запись"]
         },
         "menu_bar_save_as": {
-            "en":["Save As...", "Saves current session"]
+            "en":["Save As...", "Saves current session"],
+            "ru":["Сохранить как...", "Сохранить текущую запись"]
         },
         "menu_bar_exit": {
-            "en":["Exit", "Closes the application"]
+            "en":["Exit", "Closes the application"],
+            "ru":["Выход", "Закрыть программу"]
         },
         "menu_bar_language": {
-            "en":["Language", "App localization"]
+            "en":["Language", "App localization"],
+            "ru":["Язык", "Язык приложения"]
         },
         "menu_bar_regexp": {
-            "en":["RegExp", "Edit regular expression"]
+            "en":["RegExp", "Edit regular expression"],
+            "ru":["РегВыр", "Редактировать регулярное выражение"]
         },
         "menu_bar_about": {
-            "en":["About", "About the application"]
+            "en":["About", "About the application"],
+            "ru":["О программе", "Информация о приложении"]
         },
         "file_open_dialog_title": {
-            "en":"Open file"
+            "en":"Open file",
+            "ru":"Открыть файл"
         },
         "file_open_dialog_wildcard": {
-            "en":"All files"
+            "en":"All files",
+            "ru":"Все файлы"
         },
         "regexp_frame_title": {
-            "en":"Regular expression"
+            "en":"Regular expression",
+            "ru":"Регулярное выражение"
         },
         "regexp_dialog_checkbox": {
-            "en":"Use regular expression"
+            "en":"Use regular expression",
+            "ru":"Использовать регулярное выражение"
         },
         "regexp_dialog_save_button": {
-            "en":"Save"
+            "en":"Save",
+            "ru":"Сохранить"
         },
         "regexp_dialog_cancel_button": {
-            "en":"Cancel"
+            "en":"Cancel",
+            "ru":"Отменить"
         },
         "about_frame_title": {
-            "en":"About"
+            "en":"About",
+            "ru":"О программе"
         },
         "about_dialog_text" : {
             "en":"The Voice Assistant v",
+            "ru":"Голосовой Ассистент v",
             "var":"version"
         },
         "about_dialog_close_button" : {
-            "en":"Close"
+            "en":"Close",
+            "ru":"Закрыть"
         }
     }
 }
