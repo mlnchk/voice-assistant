@@ -4,6 +4,7 @@ import threading
 import tempfile
 import queue
 import sys
+import os
 
 from silence import remove_silence
 
@@ -27,7 +28,7 @@ class AudioRecorder:
     def record(self):
         device_info = sd.query_devices(self.device['name'], 'input')
         samplerate = int(device_info['default_samplerate'])
-        filename = tempfile.mktemp(prefix='rec_unlimited_', suffix='.wav', dir='')
+        filename = tempfile.mktemp(prefix='rec_unlimited_', suffix='.wav')
         channels = 1
         q = queue.Queue()
 
@@ -47,6 +48,7 @@ class AudioRecorder:
                     file.write(q.get())
                 print('\nRecording finished: ' + repr(filename))
                 remove_silence(filename)
+                os.remove(filename)
 
     def start(self):
         self.__recording = True
