@@ -1,5 +1,4 @@
 import wx
-from pubsub import pub
 
 import globals as glo
 import AudioRecorder as arec
@@ -29,13 +28,6 @@ class AutoID :
 
 class MainFrame (wx.Frame):
 
-    class RecordThread():
-        def __init__(self):
-            a = arec.AudioRecorder('default')
-            a.start()
-            pub.subscribe(a.stop, PUBSUB_STOP_MESSAGE)
-
-
     class element :
 
         def __init__ (self, obj, style = None, child = None):
@@ -53,6 +45,7 @@ class MainFrame (wx.Frame):
                 parent.obj.Add(self.obj, **self.style)
 
     def __init__ (self):
+        self.recorder = arec.AudioRecorder('default')
         wx.Frame.__init__(self,
                           parent = None,
                           style = wx.CAPTION | wx.CLOSE_BOX | wx.MINIMIZE_BOX)
@@ -355,11 +348,11 @@ class MainFrame (wx.Frame):
         self.device = event.GetInt()
 
     def __RecordBtn(self, event):
-        self.RecordThread()
         self.__SetState(self.STATE_RECORD)
+        self.recorder.start()
 
     def __StopBtn(self, event):
-        pub.sendMessage(PUBSUB_STOP_MESSAGE)
+        self.recorder.stop()
         self.__SetState(self.STATE_STOP)
 
     def __BindMenus(self, panel):
