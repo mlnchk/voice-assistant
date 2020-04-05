@@ -54,7 +54,6 @@ class MainFrame (wx.Frame):
         self.STATE_RESET = self.autoID.GetID()
         self.STATE_RECORD = self.autoID.GetID()
         self.STATE_STOP = self.autoID.GetID()
-        self.STATE_PLAY = self.autoID.GetID()
         self.STATE_LOADING = self.autoID.GetID()
 
         self.availableLangs = glo.GetAvailableLanguages()
@@ -69,9 +68,9 @@ class MainFrame (wx.Frame):
             self.fileOpened = False
             self.fileChanged = False
             self.fileSaved = False
+            self.panel.FindWindow('input_device_choice').Enable()
             self.panel.FindWindow('record_button').Enable()
             self.panel.FindWindow('stop_button').Disable()
-            self.panel.FindWindow('play_button').Disable()
             self.menuBar.FindItemById(self.MENU_BAR_NEW).Enable(True)
             self.menuBar.FindItemById(self.MENU_BAR_OPEN).Enable(True)
             self.menuBar.FindItemById(self.MENU_BAR_SAVE).Enable(False)
@@ -84,9 +83,9 @@ class MainFrame (wx.Frame):
             self.fileOpened = True
             self.fileChanged = True
             self.fileSaved = False
+            self.panel.FindWindow('input_device_choice').Disable()
             self.panel.FindWindow('record_button').Disable()
             self.panel.FindWindow('stop_button').Enable()
-            self.panel.FindWindow('play_button').Disable()
             self.menuBar.FindItemById(self.MENU_BAR_NEW).Enable(False)
             self.menuBar.FindItemById(self.MENU_BAR_OPEN).Enable(False)
             self.menuBar.FindItemById(self.MENU_BAR_SAVE).Enable(False)
@@ -96,9 +95,9 @@ class MainFrame (wx.Frame):
 
         def state_stop():
             self.state = self.STATE_STOP
+            self.panel.FindWindow('input_device_choice').Enable()
             self.panel.FindWindow('record_button').Enable()
             self.panel.FindWindow('stop_button').Disable()
-            self.panel.FindWindow('play_button').Enable()
             self.menuBar.FindItemById(self.MENU_BAR_NEW).Enable(True)
             self.menuBar.FindItemById(self.MENU_BAR_OPEN).Enable(True)
             self.menuBar.FindItemById(self.MENU_BAR_SAVE).Enable(True)
@@ -106,23 +105,11 @@ class MainFrame (wx.Frame):
             self.menuBar.FindItemById(self.MENU_BAR_LANGUAGE).Enable(True)
             self.menuBar.FindItemById(self.MENU_BAR_ABOUT).Enable(True)
 
-        def state_play():
-            self.state = self.STATE_PLAY
-            self.panel.FindWindow('record_button').Disable()
-            self.panel.FindWindow('stop_button').Enable()
-            self.panel.FindWindow('play_button').Disable()
-            self.menuBar.FindItemById(self.MENU_BAR_NEW).Enable(False)
-            self.menuBar.FindItemById(self.MENU_BAR_OPEN).Enable(False)
-            self.menuBar.FindItemById(self.MENU_BAR_SAVE).Enable(False)
-            self.menuBar.FindItemById(self.MENU_BAR_SAVE_AS).Enable(False)
-            self.menuBar.FindItemById(self.MENU_BAR_LANGUAGE).Enable(False)
-            self.menuBar.FindItemById(self.MENU_BAR_ABOUT).Enable(False)
-
         def state_loading():
             self.state = self.STATE_LOADING
+            self.panel.FindWindow('input_device_choice').Disable()
             self.panel.FindWindow('record_button').Disable()
             self.panel.FindWindow('stop_button').Disable()
-            self.panel.FindWindow('play_button').Disable()
             self.menuBar.FindItemById(self.MENU_BAR_NEW).Enable(False)
             self.menuBar.FindItemById(self.MENU_BAR_OPEN).Enable(False)
             self.menuBar.FindItemById(self.MENU_BAR_SAVE).Enable(False)
@@ -134,7 +121,6 @@ class MainFrame (wx.Frame):
             self.STATE_RESET   : state_reset,
             self.STATE_RECORD  : state_record,
             self.STATE_STOP    : state_stop,
-            self.STATE_PLAY    : state_play,
             self.STATE_LOADING : state_loading
         }
 
@@ -184,8 +170,7 @@ class MainFrame (wx.Frame):
                     { 'proportion' : 1, 'flag' : wx.ALL | wx.EXPAND, 'border' : 3 },
                     [
                         element(wx.Button(panel, name = 'record_button')),
-                        element(wx.Button(panel, name = 'stop_button')),
-                        element(wx.Button(panel, name = 'play_button'))
+                        element(wx.Button(panel, name = 'stop_button'))
                     ]
                 ),
             ]
@@ -350,7 +335,6 @@ class MainFrame (wx.Frame):
         panel.FindWindow('input_device_choice').Bind(wx.EVT_CHOICE, self.__SetDevice)
         panel.FindWindow('record_button').Bind(wx.EVT_BUTTON, self.__RecordBtn)
         panel.FindWindow('stop_button').Bind(wx.EVT_BUTTON, self.__StopBtn)
-        panel.FindWindow('play_button').Bind(wx.EVT_BUTTON, self.__PlayBtn)
     
     def __SetDevice(self, event):
         self.device = event.GetInt()
@@ -360,9 +344,6 @@ class MainFrame (wx.Frame):
 
     def __StopBtn(self, event):
         self.__SetState(self.STATE_STOP)
-
-    def __PlayBtn(self, event):
-        self.__SetState(self.STATE_PLAY)
 
     def __BindMenus(self, panel):
         menuHandlers = {
@@ -411,6 +392,8 @@ class MainFrame (wx.Frame):
         sizer.Fit(self)
 
     def __OnClose(self, event):
+        if self.state == self.STATE_RECORD:
+            self.__StopBtn(event)
         if event.CanVeto() and (self.fileChanged and not self.fileSaved):
             if wx.MessageBox("The file has not been saved... continue closing?",
                              "Please confirm",
