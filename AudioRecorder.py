@@ -1,16 +1,11 @@
 import sounddevice as sd
 import soundfile as sf
 import threading
-
-import argparse
 import tempfile
 import queue
 import sys
 
-class StopAudio(Exception):
-    pass
-
-parser = argparse.ArgumentParser(description=__doc__)
+from silence import remove_silence
 
 class AudioRecorder:
     devices = sd.query_devices()
@@ -51,6 +46,7 @@ class AudioRecorder:
                 while self.__recording:
                     file.write(q.get())
                 print('\nRecording finished: ' + repr(filename))
+                remove_silence(filename)
 
     def start(self):
         self.__recording = True
