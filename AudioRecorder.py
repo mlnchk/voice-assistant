@@ -18,11 +18,14 @@ class AudioRecorder:
     def __init__(self, filename):
         self.filename = filename
 
-    def set_device(self, device):
-        self.device = device
+    def get_devices(self):
+        return self.devices
 
     def get_device(self):
         return self.device
+
+    def set_device(self, device):
+        self.device = device
 
     def record(self):
         try:
