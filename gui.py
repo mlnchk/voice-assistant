@@ -48,6 +48,7 @@ class MainFrame (wx.Frame):
         self.__InitStateFields()
         self.__InitUI()
         self.UpdateContent()
+        self.__SetState(self.STATE_RESET)
 
     def __InitStateFields(self):
         self.STATE_RESET = self.autoID.GetID()
@@ -61,7 +62,81 @@ class MainFrame (wx.Frame):
         self.fileOpened = False
         self.fileChanged = False
         self.fileSaved = False
-        self.state = 0
+        self.state = self.STATE_RESET
+
+        def state_reset():
+            self.state = self.STATE_RESET
+            self.fileOpened = False
+            self.fileChanged = False
+            self.fileSaved = False
+            self.panel.FindWindow('record_button').Enable()
+            self.panel.FindWindow('stop_button').Disable()
+            self.panel.FindWindow('play_button').Disable()
+            self.menuBar.FindItemById(self.MENU_BAR_NEW).Enable(True)
+            self.menuBar.FindItemById(self.MENU_BAR_OPEN).Enable(True)
+            self.menuBar.FindItemById(self.MENU_BAR_SAVE).Enable(False)
+            self.menuBar.FindItemById(self.MENU_BAR_SAVE_AS).Enable(False)
+            self.menuBar.FindItemById(self.MENU_BAR_LANGUAGE).Enable(True)
+            self.menuBar.FindItemById(self.MENU_BAR_ABOUT).Enable(True)
+        
+        def state_record():
+            self.state = self.STATE_RECORD
+            self.fileOpened = True
+            self.fileChanged = True
+            self.fileSaved = False
+            self.panel.FindWindow('record_button').Disable()
+            self.panel.FindWindow('stop_button').Enable()
+            self.panel.FindWindow('play_button').Disable()
+            self.menuBar.FindItemById(self.MENU_BAR_NEW).Enable(False)
+            self.menuBar.FindItemById(self.MENU_BAR_OPEN).Enable(False)
+            self.menuBar.FindItemById(self.MENU_BAR_SAVE).Enable(False)
+            self.menuBar.FindItemById(self.MENU_BAR_SAVE_AS).Enable(False)
+            self.menuBar.FindItemById(self.MENU_BAR_LANGUAGE).Enable(False)
+            self.menuBar.FindItemById(self.MENU_BAR_ABOUT).Enable(False)
+
+        def state_stop():
+            self.state = self.STATE_STOP
+            self.panel.FindWindow('record_button').Enable()
+            self.panel.FindWindow('stop_button').Disable()
+            self.panel.FindWindow('play_button').Enable()
+            self.menuBar.FindItemById(self.MENU_BAR_NEW).Enable(True)
+            self.menuBar.FindItemById(self.MENU_BAR_OPEN).Enable(True)
+            self.menuBar.FindItemById(self.MENU_BAR_SAVE).Enable(True)
+            self.menuBar.FindItemById(self.MENU_BAR_SAVE_AS).Enable(True)
+            self.menuBar.FindItemById(self.MENU_BAR_LANGUAGE).Enable(True)
+            self.menuBar.FindItemById(self.MENU_BAR_ABOUT).Enable(True)
+
+        def state_play():
+            self.state = self.STATE_PLAY
+            self.panel.FindWindow('record_button').Disable()
+            self.panel.FindWindow('stop_button').Enable()
+            self.panel.FindWindow('play_button').Disable()
+            self.menuBar.FindItemById(self.MENU_BAR_NEW).Enable(False)
+            self.menuBar.FindItemById(self.MENU_BAR_OPEN).Enable(False)
+            self.menuBar.FindItemById(self.MENU_BAR_SAVE).Enable(False)
+            self.menuBar.FindItemById(self.MENU_BAR_SAVE_AS).Enable(False)
+            self.menuBar.FindItemById(self.MENU_BAR_LANGUAGE).Enable(False)
+            self.menuBar.FindItemById(self.MENU_BAR_ABOUT).Enable(False)
+
+        def state_loading():
+            self.state = self.STATE_LOADING
+            self.panel.FindWindow('record_button').Disable()
+            self.panel.FindWindow('stop_button').Disable()
+            self.panel.FindWindow('play_button').Disable()
+            self.menuBar.FindItemById(self.MENU_BAR_NEW).Enable(False)
+            self.menuBar.FindItemById(self.MENU_BAR_OPEN).Enable(False)
+            self.menuBar.FindItemById(self.MENU_BAR_SAVE).Enable(False)
+            self.menuBar.FindItemById(self.MENU_BAR_SAVE_AS).Enable(False)
+            self.menuBar.FindItemById(self.MENU_BAR_LANGUAGE).Enable(False)
+            self.menuBar.FindItemById(self.MENU_BAR_ABOUT).Enable(False)
+
+        self.statesHandlers = {
+            self.STATE_RESET   : state_reset,
+            self.STATE_RECORD  : state_record,
+            self.STATE_STOP    : state_stop,
+            self.STATE_PLAY    : state_play,
+            self.STATE_LOADING : state_loading
+        }
 
     def __InitUI (self):
         self.panel = wx.Panel(self)
@@ -221,11 +296,11 @@ class MainFrame (wx.Frame):
         self.SetMenuBar(mb)
     
     def __ComposeStatusBar (self, panel):
-        sb = self.statusBar = wx.StatusBar(panel, name = 'statusBar')
+        sb = self.statusBar = wx.StatusBar(panel)
         sb.SetFieldsCount(2)
         sb.SetStatusWidths([-3, -1])
-        sb.SetStatusText('state', 0)
-        sb.SetStatusText('0:00', 1)
+        sb.SetStatusText('', 0)
+        sb.SetStatusText('', 1)
         self.SetStatusBar(sb)
 
     def __SetContent (self):
@@ -262,10 +337,22 @@ class MainFrame (wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.__OnClose)
 
     def __BindWidgets(self, panel):
-        return
+        self.panel.FindWindow('record_button').Bind(wx.EVT_BUTTON, self.__RecordBtn)
+        self.panel.FindWindow('stop_button').Bind(wx.EVT_BUTTON, self.__StopBtn)
+        self.panel.FindWindow('play_button').Bind(wx.EVT_BUTTON, self.__PlayBtn)
+    
+    def __RecordBtn(self, event):
+        self.__SetState(self.STATE_RECORD)
+
+    def __StopBtn(self, event):
+        self.__SetState(self.STATE_STOP)
+
+    def __PlayBtn(self, event):
+        self.__SetState(self.STATE_PLAY)
 
     def __BindMenus(self, panel):
         menuHandlers = {
+            self.MENU_BAR_NEW  : self.__Reset,
             self.MENU_BAR_EXIT : self.__Exit,
             self.MENU_BAR_ABOUT: self.__InvokeAboutWindow
         }
@@ -285,6 +372,9 @@ class MainFrame (wx.Frame):
             self.UpdateContent()
         return cl
 
+    def __Reset(self, event):
+        self.__SetState(self.STATE_RESET)
+
     def __Exit(self, event):
         self.Close()
 
@@ -293,13 +383,13 @@ class MainFrame (wx.Frame):
 
     def UpdateContent(self):
         self.__SetContent()
-        self.__UpdateState()
         self.Refresh()
         self.Update()
         self.aboutDialog.UpdateContent()
 
-    def __UpdateState(self):
-        return
+    def __SetState(self, state):
+        if state in self.statesHandlers:
+            self.statesHandlers[state]()
 
     def __OnRepaint (self, event):
         sizer = self.panel.GetSizer()
@@ -315,7 +405,7 @@ class MainFrame (wx.Frame):
                 return
 
         self.Destroy()
-    
+
     class AboutDialog(wx.Dialog):
 
         def __init__(self, parent):
