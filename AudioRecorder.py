@@ -1,5 +1,6 @@
 import sounddevice as sd
 import soundfile as sf
+import threading
 
 import argparse
 import tempfile
@@ -17,6 +18,7 @@ class AudioRecorder:
 
     def __init__(self, filename):
         self.filename = filename
+        self.__recording = False
 
     def get_devices(self):
         return self.devices
@@ -28,43 +30,32 @@ class AudioRecorder:
         self.device = device
 
     def record(self):
-        try:
-            device_info = sd.query_devices(self.device['name'], 'input')
-            samplerate = int(device_info['default_samplerate'])
-            filename = tempfile.mktemp(prefix='rec_unlimited_', suffix='.wav', dir='')
-            channels = 1
-            q = queue.Queue()
+        device_info = sd.query_devices(self.device['name'], 'input')
+        samplerate = int(device_info['default_samplerate'])
+        filename = tempfile.mktemp(prefix='rec_unlimited_', suffix='.wav', dir='')
+        channels = 1
+        q = queue.Queue()
 
-            def callback(indata, frames, time, status):
-                """This is called (from a separate thread) for each audio block."""
-                if status:
-                    print(status, file=sys.stderr)
-                q.put(indata.copy())
+        def callback(indata, frames, time, status):
+            """This is called (from a separate thread) for each audio block."""
+            if status:
+                print(status, file=sys.stderr)
+            q.put(indata.copy())
 
-            # Make sure the file is opened before recording anything:
-            with sf.SoundFile(filename, mode='x', samplerate=samplerate, channels=channels) as file:
-                with sd.InputStream(samplerate=samplerate, device=self.device['name'], channels=channels, callback=callback):
-                    print('#' * 80)
-                    print('press Ctrl+C to stop the recording')
-                    print('#' * 80)
-                    while True:
-                        file.write(q.get())
+        # Make sure the file is opened before recording anything:
+        with sf.SoundFile(filename, mode='x', samplerate=samplerate, channels=channels) as file:
+            with sd.InputStream(samplerate=samplerate, device=self.device['name'], channels=channels, callback=callback):
+                print('#' * 80)
+                print('press Ctrl+C to stop the recording')
+                print('#' * 80)
+                while self.__recording:
+                    file.write(q.get())
+                print('\nRecording finished: ' + repr(filename))
 
-        except KeyboardInterrupt:
-            print('\nRecording finished: ' + repr(filename))
-            # remove_silence(filename)
-            parser.exit(0)
-        except StopAudio:
-            print('\nRecording finished: ' + repr(filename))
-            # remove_silence(filename)
-            parser.exit(0)
-        except Exception as e:
-            parser.exit(type(e).__name__ + ': ' + str(e))
+    def start(self):
+        self.__recording = True
+        self.loop_thread = threading.Thread(target=self.record)
+        self.loop_thread.start()
 
     def stop(self):
-        raise StopAudio()
-
-
-# _ = AudioRecorder('test')
-# print(_.device['name'])
-# _.record()
+        self.__recording = False

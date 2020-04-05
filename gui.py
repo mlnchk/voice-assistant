@@ -1,5 +1,4 @@
 import wx
-from threading import Thread
 from pubsub import pub
 
 import globals as glo
@@ -30,21 +29,12 @@ class AutoID :
 
 class MainFrame (wx.Frame):
 
-    class RecordThread(Thread):
-
+    class RecordThread():
         def __init__(self):
-            Thread.__init__(self)
-            self.start()
-
-        def run(self):
             a = arec.AudioRecorder('default')
-            self.stopFunction = a.stop
-            pub.subscribe(self.stop, PUBSUB_STOP_MESSAGE)
-            a.record()
+            a.start()
+            pub.subscribe(a.stop, PUBSUB_STOP_MESSAGE)
 
-        def stop(self):
-            self.stopFunction()
-            print('should stop')
 
     class element :
 
