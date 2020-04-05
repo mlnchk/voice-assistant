@@ -1,5 +1,6 @@
 import sounddevice as sd
 import soundfile as sf
+import threading
 
 import argparse
 import tempfile
@@ -17,6 +18,7 @@ class AudioRecorder:
 
     def __init__(self, filename):
         self.filename = filename
+        self.__recording = False
 
     def get_devices(self):
         return self.devices
@@ -47,24 +49,15 @@ class AudioRecorder:
                     print('#' * 80)
                     print('press Ctrl+C to stop the recording')
                     print('#' * 80)
-                    while True:
+                    while self.__recording:
                         file.write(q.get())
+                    print('\nRecording finished: ' + repr(filename))
 
-        except KeyboardInterrupt:
-            print('\nRecording finished: ' + repr(filename))
-            # remove_silence(filename)
-            parser.exit(0)
-        except StopAudio:
-            print('\nRecording finished: ' + repr(filename))
-            # remove_silence(filename)
-            parser.exit(0)
-        except Exception as e:
-            parser.exit(type(e).__name__ + ': ' + str(e))
+    def start(self):
+        self.__recording = True
+        self.loop_thread = threading.Thread(target=self.record)
+        self.loop_thread.start()
 
     def stop(self):
-        raise StopAudio()
-
-
-# _ = AudioRecorder('test')
-# print(_.device['name'])
-# _.record()
+        print('ass')
+        self.__recording = False
