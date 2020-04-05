@@ -65,6 +65,6 @@ class AudioRecorder:
         raise StopAudio()
 
 
-_ = AudioRecorder('test')
-print(_.device['name'])
-_.record()
+# _ = AudioRecorder('test')
+# print(_.device['name'])
+# _.record()

@@ -1,6 +1,9 @@
 import wx
+from threading import Thread
+from pubsub import pub
+
 import globals as glo
-import audio
+import AudioRecorder as arec
 
 def process_path(pathname):
 
@@ -25,6 +28,22 @@ class AutoID :
         return self.id
 
 class MainFrame (wx.Frame):
+
+    class RecordThread(Thread):
+
+        def __init__(self):
+            Thread.__init__(self)
+            self.start()
+        
+        def run(self):
+            a = arec.AudioRecorder('default')
+            self.stopFunction = a.stop
+            pub.subscribe(self.stop, "recorder_stop")
+            a.record()
+
+        def stop(self):
+            self.stopFunction()
+            print('should stop')
 
     class element :
 
@@ -308,12 +327,13 @@ class MainFrame (wx.Frame):
                 element.SetLabel(text)
     
     def __SetDevicesList(self, element):
-        self.devices = audio.get_devices()
-        devices = [x['name'] for x in self.devices]
-        element.SetItems(devices)
-        default = audio.get_devices('input')
-        n = element.FindString(default['name'], True)
-        element.SetSelection(n)
+        # self.devices = audio.get_devices()
+        # devices = [x['name'] for x in self.devices]
+        # element.SetItems(devices)
+        # default = audio.get_devices('input')
+        # n = element.FindString(default['name'], True)
+        # element.SetSelection(n)
+        return
 
     def __SetMenuBarContent(self, lang):
         menus = []
@@ -344,9 +364,11 @@ class MainFrame (wx.Frame):
         self.device = event.GetInt()
 
     def __RecordBtn(self, event):
+        self.RecordThread()
         self.__SetState(self.STATE_RECORD)
 
     def __StopBtn(self, event):
+        pub.sendMessage("record_stop")
         self.__SetState(self.STATE_STOP)
 
     def __BindMenus(self, panel):
