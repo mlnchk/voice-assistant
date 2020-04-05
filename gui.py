@@ -61,6 +61,7 @@ class MainFrame (wx.Frame):
         self.icon = wx.Icon(glo.AppIconBitmap)
         self.autoID = AutoID()
         self.aboutDialog = self.AboutDialog(self)
+        self.regexpDialog = self.RegexpDialog(self)
         self.__InitStateFields()
         self.__InitUI()
         self.UpdateContent()
@@ -203,6 +204,7 @@ class MainFrame (wx.Frame):
         self.MENU_BAR_SAVE_AS = self.autoID.GetID()
         self.MENU_BAR_EXIT = self.autoID.GetID()
         self.MENU_BAR_LANGUAGE = self.autoID.GetID()
+        self.MENU_BAR_REGEXP = self.autoID.GetID()
         self.MENU_BAR_ABOUT = self.autoID.GetID()
 
         self.MENU_BAR_LANGS = {}
@@ -266,6 +268,13 @@ class MainFrame (wx.Frame):
                 }
             },
             {
+                'menu' : menus[1][0],
+                'name' : 'menu_bar_regexp',
+                'params' : {
+                    'id' : self.MENU_BAR_REGEXP
+                }
+            },
+            {
                 'menu' : menus[2][0],
                 'name' : 'menu_bar_about',
                 'params' : {
@@ -326,7 +335,6 @@ class MainFrame (wx.Frame):
         default = self.recorder.get_device()
         n = element.FindString(default['name'], True)
         element.SetSelection(n)
-        return
 
     def __SetMenuBarContent(self, lang):
         menus = []
@@ -369,6 +377,7 @@ class MainFrame (wx.Frame):
             self.MENU_BAR_NEW  : self.__Reset,
             self.MENU_BAR_OPEN : self.__Open,
             self.MENU_BAR_EXIT : self.__Exit,
+            self.MENU_BAR_REGEXP: self.__InvokeRegexpWindow,
             self.MENU_BAR_ABOUT: self.__InvokeAboutWindow
         }
         for lang in self.MENU_BAR_LANGS:
@@ -408,6 +417,9 @@ class MainFrame (wx.Frame):
 
     def __InvokeAboutWindow(self, event):
         self.aboutDialog.ShowModal()
+
+    def __InvokeRegexpWindow(self, event):
+        self.regexpDialog.ShowModal()
 
     def UpdateContent(self):
         self.__SetContent()
@@ -453,8 +465,8 @@ class MainFrame (wx.Frame):
                 { 'flag' : wx.ALL, 'border' : 3 },
                 [
                     element(
-                    wx.BoxSizer(wx.VERTICAL),
-                    { 'flag' : wx.ALL | wx.CENTER, 'border' : 3 },
+                        wx.BoxSizer(wx.VERTICAL),
+                        { 'flag' : wx.ALL | wx.CENTER, 'border' : 3 },
                         [
                             element(
                                 wx.StaticBitmap(panel, bitmap = glo.AppIconBitmap)
@@ -500,4 +512,95 @@ class MainFrame (wx.Frame):
             sizer.Fit(self)
 
         def __CloseBtnClick(self, event):
+            self.EndModal(wx.ID_OK)
+
+    class RegexpDialog(wx.Dialog):
+
+        def __init__(self, parent):
+            super().__init__(parent = parent,
+                             style = wx.CAPTION)
+            self.__InitUI()
+            self.__Bind()
+            self.UpdateContent()
+
+        def __InitUI(self):
+            panel = self.panel = wx.Panel(self)
+            tc = wx.TextCtrl(panel, name = 'regexp_dialog_text_control')
+            element = MainFrame.element
+            elements = element(
+                wx.BoxSizer(wx.VERTICAL),
+                { 'flag' : wx.ALL | wx.EXPAND, 'border' : 3 },
+                [
+                    element(
+                        wx.BoxSizer(wx.VERTICAL),
+                        { 'flag' : wx.ALL | wx.EXPAND, 'border' : 3 },
+                        [
+                            element(wx.CheckBox(panel, name = 'regexp_dialog_checkbox')),
+                            element(tc)
+                        ]
+                    ),
+                    element(
+                        wx.BoxSizer(wx.HORIZONTAL),
+                        { 'proportion' : 1, 'flag' : wx.ALL ^ wx.TOP | wx.EXPAND, 'border' : 3 },
+                        [
+                            element(wx.Button(panel, name = 'regexp_dialog_save_button')),
+                            element(wx.Button(panel, name = 'regexp_dialog_cancel_button'))
+                        ]
+                    )
+                ]
+            )
+            elements.Compose()
+
+            tcsize = tc.GetBestSize().Scale(4.0, 1.0)
+            tc.SetMinSize(tcsize)
+            
+            panel.SetSizer(elements.obj)
+
+        def __SetContent(self):
+            lang = glo.Settings['lang']
+            self.SetTitle(glo.GetText('regexp_frame_title', lang))
+            cb = self.panel.FindWindow('regexp_dialog_checkbox')
+            cb.SetValue(glo.Settings['pathname_regexp'][0])
+            tc = self.panel.FindWindow('regexp_dialog_text_control')
+            tc.SetValue(glo.Settings['pathname_regexp'][1])
+            tc.Enable(cb.IsChecked())
+            for element in self.panel.GetChildren():
+                name = element.GetName()
+                text = glo.GetText(name, lang)
+                variable = glo.GetText(name, 'var')
+                varstr = ''
+                if variable != 'n/a':
+                    varstr = glo.Get(variable)
+                if text != 'n/a':
+                    element.SetLabel(text + varstr)
+
+        def __Bind(self):
+            self.Bind(wx.EVT_PAINT, self.__OnRepaint)
+            self.panel.FindWindow('regexp_dialog_checkbox').Bind(wx.EVT_CHECKBOX, self.__CheckBoxClick)
+            self.panel.FindWindow('regexp_dialog_save_button').Bind(wx.EVT_BUTTON, self.__SaveBtnClick)
+            self.panel.FindWindow('regexp_dialog_cancel_button').Bind(wx.EVT_BUTTON, self.__CancelBtnClick)
+
+        def UpdateContent(self):
+            self.__SetContent()
+            self.Refresh()
+            self.Update()
+
+        def __OnRepaint(self, event):
+            sizer = self.panel.GetSizer()
+            sizer.Layout()
+            sizer.Fit(self)
+
+        def __CheckBoxClick(self, event):
+            state = event.IsChecked()
+            self.panel.FindWindow('regexp_dialog_text_control').Enable(state)
+
+        def __SaveBtnClick(self, event):
+            glo.Settings['pathname_regexp'] = (
+                self.panel.FindWindow('regexp_dialog_checkbox').IsChecked(),
+                self.panel.FindWindow('regexp_dialog_text_control').GetValue(),
+                1
+            )
+            self.EndModal(wx.ID_OK)
+
+        def __CancelBtnClick(self, event):
             self.EndModal(wx.ID_OK)

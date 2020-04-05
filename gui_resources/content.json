@@ -49,6 +49,9 @@
         "menu_bar_language": {
             "en":["Language", "App localization"]
         },
+        "menu_bar_regexp": {
+            "en":["RegExp", "Edit regular expression"]
+        },
         "menu_bar_about": {
             "en":["About", "About the application"]
         },
@@ -57,6 +60,18 @@
         },
         "file_open_dialog_wildcard": {
             "en":"All files"
+        },
+        "regexp_frame_title": {
+            "en":"Regular expression"
+        },
+        "regexp_dialog_checkbox": {
+            "en":"Use regular expression"
+        },
+        "regexp_dialog_save_button": {
+            "en":"Save"
+        },
+        "regexp_dialog_cancel_button": {
+            "en":"Cancel"
         },
         "about_frame_title": {
             "en":"About"
