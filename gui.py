@@ -5,12 +5,13 @@ from pubsub import pub
 import globals as glo
 import AudioRecorder as arec
 
-def process_path(pathname):
+PUBSUB_STOP_MESSAGE = 'stop_record'
 
+def process_path(pathname):
     return pathname
 
 class AppCore(wx.App):
-    
+
     def OnInit(self):
         glo.LoadResources()
         mf = MainFrame()
@@ -22,7 +23,7 @@ class AutoID :
 
     def __init__(self):
         self.id = 0
-        
+
     def GetID(self):
         self.id += 1
         return self.id
@@ -34,11 +35,11 @@ class MainFrame (wx.Frame):
         def __init__(self):
             Thread.__init__(self)
             self.start()
-        
+
         def run(self):
             a = arec.AudioRecorder('default')
             self.stopFunction = a.stop
-            pub.subscribe(self.stop, "recorder_stop")
+            pub.subscribe(self.stop, PUBSUB_STOP_MESSAGE)
             a.record()
 
         def stop(self):
@@ -51,7 +52,7 @@ class MainFrame (wx.Frame):
             self.obj = obj
             self.style = style
             self.child = child
-    
+
         def Compose(self, parent = None):
             if self.style == None:
                 self.style = parent.style
@@ -100,7 +101,7 @@ class MainFrame (wx.Frame):
             self.menuBar.FindItemById(self.MENU_BAR_SAVE_AS).Enable(False)
             self.menuBar.FindItemById(self.MENU_BAR_LANGUAGE).Enable(True)
             self.menuBar.FindItemById(self.MENU_BAR_ABOUT).Enable(True)
-        
+
         def state_record():
             self.state = self.STATE_RECORD
             self.fileOpened = True
@@ -203,7 +204,7 @@ class MainFrame (wx.Frame):
 
     def __ComposeMenuBar (self, panel):
         mb = self.menuBar = wx.MenuBar()
-        
+
         self.MENU_BAR_NEW = self.autoID.GetID()
         self.MENU_BAR_OPEN = self.autoID.GetID()
         self.MENU_BAR_SAVE = self.autoID.GetID()
@@ -302,7 +303,7 @@ class MainFrame (wx.Frame):
             menuItem['object'] = menuItem['menu'].Append(**params)
 
         self.SetMenuBar(mb)
-    
+
     def __ComposeStatusBar (self, panel):
         sb = self.statusBar = wx.StatusBar(panel)
         sb.SetFieldsCount(2)
@@ -325,7 +326,7 @@ class MainFrame (wx.Frame):
             text = glo.GetText(name, lang)
             if text != 'n/a':
                 element.SetLabel(text)
-    
+
     def __SetDevicesList(self, element):
         # self.devices = audio.get_devices()
         # devices = [x['name'] for x in self.devices]
@@ -359,7 +360,7 @@ class MainFrame (wx.Frame):
         panel.FindWindow('input_device_choice').Bind(wx.EVT_CHOICE, self.__SetDevice)
         panel.FindWindow('record_button').Bind(wx.EVT_BUTTON, self.__RecordBtn)
         panel.FindWindow('stop_button').Bind(wx.EVT_BUTTON, self.__StopBtn)
-    
+
     def __SetDevice(self, event):
         self.device = event.GetInt()
 
@@ -368,7 +369,7 @@ class MainFrame (wx.Frame):
         self.__SetState(self.STATE_RECORD)
 
     def __StopBtn(self, event):
-        pub.sendMessage("record_stop")
+        pub.sendMessage(PUBSUB_STOP_MESSAGE)
         self.__SetState(self.STATE_STOP)
 
     def __BindMenus(self, panel):
@@ -472,7 +473,7 @@ class MainFrame (wx.Frame):
                             element(
                                 wx.Button(panel, name = 'about_dialog_close_button')
                             )
-                        ]   
+                        ]
                     )
                 ]
             )
