@@ -1,12 +1,15 @@
 import audio
 import gui
 
-def main(GUI = True):
-    if GUI:
+GUI = True
+CLI = False
+
+def main(mode = True):
+    if mode == GUI:
         core = gui.AppCore()
         core.MainLoop()
     else:
         audio.main_cli()
 
 if __name__ == "__main__":
-    main(True)
+    main(GUI)

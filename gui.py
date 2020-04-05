@@ -1,5 +1,6 @@
 import wx
 import globals as glo
+import audio
 
 class AppCore(wx.App):
     
@@ -43,7 +44,6 @@ class MainFrame (wx.Frame):
                           style = wx.CAPTION | wx.CLOSE_BOX | wx.MINIMIZE_BOX)
         self.icon = wx.Icon(glo.AppIconBitmap)
         self.autoID = AutoID()
-        self.SetIcon(self.icon)
         self.aboutDialog = self.AboutDialog(self)
         self.__InitStateFields()
         self.__InitUI()
@@ -304,17 +304,27 @@ class MainFrame (wx.Frame):
         self.SetStatusBar(sb)
 
     def __SetContent (self):
+        self.SetIcon(self.icon)
         lang = glo.Settings['lang']
         self.SetTitle(glo.GetText('main_frame_title', lang))
         self.__SetWidgetsContent(lang)
         self.__SetMenuBarContent(lang)
 
     def __SetWidgetsContent(self, lang):
+        self.__SetDevicesList(self.panel.FindWindow('input_device_choice'))
         for element in self.panel.GetChildren():
             name = element.GetName()
             text = glo.GetText(name, lang)
             if text != 'n/a':
                 element.SetLabel(text)
+    
+    def __SetDevicesList(self, element):
+        self.devices = audio.get_devices()
+        devices = [x['name'] for x in self.devices]
+        element.SetItems(devices)
+        default = audio.get_devices('input')
+        n = element.FindString(default['name'], True)
+        element.SetSelection(n)
 
     def __SetMenuBarContent(self, lang):
         menus = []
@@ -337,10 +347,14 @@ class MainFrame (wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.__OnClose)
 
     def __BindWidgets(self, panel):
-        self.panel.FindWindow('record_button').Bind(wx.EVT_BUTTON, self.__RecordBtn)
-        self.panel.FindWindow('stop_button').Bind(wx.EVT_BUTTON, self.__StopBtn)
-        self.panel.FindWindow('play_button').Bind(wx.EVT_BUTTON, self.__PlayBtn)
+        panel.FindWindow('input_device_choice').Bind(wx.EVT_CHOICE, self.__SetDevice)
+        panel.FindWindow('record_button').Bind(wx.EVT_BUTTON, self.__RecordBtn)
+        panel.FindWindow('stop_button').Bind(wx.EVT_BUTTON, self.__StopBtn)
+        panel.FindWindow('play_button').Bind(wx.EVT_BUTTON, self.__PlayBtn)
     
+    def __SetDevice(self, event):
+        self.device = event.GetInt()
+
     def __RecordBtn(self, event):
         self.__SetState(self.STATE_RECORD)
 
