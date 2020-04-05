@@ -426,6 +426,7 @@ class MainFrame (wx.Frame):
         self.Refresh()
         self.Update()
         self.aboutDialog.UpdateContent()
+        self.regexpDialog.UpdateContent()
 
     def __SetState(self, state):
         if state in self.statesHandlers:
@@ -553,7 +554,7 @@ class MainFrame (wx.Frame):
 
             tcsize = tc.GetBestSize().Scale(4.0, 1.0)
             tc.SetMinSize(tcsize)
-            
+
             panel.SetSizer(elements.obj)
 
         def __SetContent(self):
