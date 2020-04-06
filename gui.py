@@ -1,6 +1,7 @@
 import wx
 import os.path
 import re
+import subprocess, os, platform
 
 import globals as glo
 import AudioRecorder as arec
@@ -411,8 +412,22 @@ class MainFrame (wx.Frame):
                 return
             pathname = fileDialog.GetPath()
             self.panel.FindWindow('session_name_text_control').SetValue(self.__process_path(pathname))
-            # open file by os
+            self.__DelegateOpeningFile(pathname)
 
+    def __DelegateOpeningFile(self, pathname):
+        try:
+            if platform.system() == 'Darwin':
+                retcode = subprocess.call(('open', pathname))
+            elif platform.system() == 'Windows':
+                os.startfile(os.path.normpath(pathname))
+            else:
+                retcode = subprocess.call(('xdg-open', pathname))
+        except:
+            wx.MessageDialog(self,
+                             message = glo.GetText('file_open_error_dialog_text'),
+                             caption = glo.GetText('file_open_error_dialog_title'),
+                             style = wx.OK | wx.CENTRE | wx.ICON_WARNING
+            )
 
     def __Exit(self, event):
         self.Close()

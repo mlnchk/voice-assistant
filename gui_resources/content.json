@@ -77,6 +77,14 @@
             "en":"All files",
             "ru":"Все файлы"
         },
+        "file_open_error_dialog_text": {
+            "en":"Couldn't open file!",
+            "ru":"Ошибка при открытии файла!"
+        },
+        "file_open_error_dialog_title": {
+            "en":"Opening error",
+            "ru":"Ошибка открытия"
+        },
         "regexp_frame_title": {
             "en":"Regular expression",
             "ru":"Регулярное выражение"
