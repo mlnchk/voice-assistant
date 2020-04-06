@@ -55,7 +55,7 @@ class MainFrame (wx.Frame):
                 parent.obj.Add(self.obj, **self.style)
 
     def __init__ (self):
-        self.recorder = arec.AudioRecorder('default')
+        self.recorder = arec.AudioRecorder('default', self.__StatusError)
         wx.Frame.__init__(self,
                           parent = None,
                           style = wx.CAPTION | wx.CLOSE_BOX | wx.MINIMIZE_BOX)
@@ -364,10 +364,14 @@ class MainFrame (wx.Frame):
 
     def __SetDevice(self, event):
         self.device = event.GetInt()
+        self.recorder.set_device(self.devices[self.device])
 
     def __RecordBtn(self, event):
         self.__SetState(self.STATE_RECORD)
         self.recorder.start()
+
+    def __StatusError(self):
+        self.__SetState(self.STATE_STOP)
 
     def __StopBtn(self, event):
         self.recorder.stop()
@@ -415,19 +419,21 @@ class MainFrame (wx.Frame):
             self.__DelegateOpeningFile(pathname)
 
     def __DelegateOpeningFile(self, pathname):
+        #opening error handle
         try:
             if platform.system() == 'Darwin':
-                retcode = subprocess.call(('open', pathname))
+                subprocess.call(('open', pathname))
             elif platform.system() == 'Windows':
                 os.startfile(os.path.normpath(pathname))
             else:
-                retcode = subprocess.call(('xdg-open', pathname))
+                subprocess.call(('xdg-open', pathname))
         except:
+            lang = glo.Settings['lang']
             wx.MessageDialog(self,
-                             message = glo.GetText('file_open_error_dialog_text'),
-                             caption = glo.GetText('file_open_error_dialog_title'),
+                             message = glo.GetText('file_open_error_dialog_text', lang),
+                             caption = glo.GetText('file_open_error_dialog_title', lang),
                              style = wx.OK | wx.CENTRE | wx.ICON_WARNING
-            )
+            ).ShowModal()
 
     def __Exit(self, event):
         self.Close()

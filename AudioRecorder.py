@@ -12,9 +12,10 @@ class AudioRecorder:
     devices = sd.query_devices()
     device = sd.query_devices(kind = 'input')
 
-    def __init__(self, filename):
+    def __init__(self, filename, statusCallback):
         self.filename = filename
         self.__recording = False
+        self.statusCallback = statusCallback
 
     def get_devices(self):
         return self.devices
@@ -35,8 +36,10 @@ class AudioRecorder:
         def callback(indata, frames, time, status):
             """This is called (from a separate thread) for each audio block."""
             if status:
-                print(status, file=sys.stderr)
-            q.put(indata.copy())
+                self.stop()
+                self.statusCallback()
+            else:
+                q.put(indata.copy())
 
         # Make sure the file is opened before recording anything:
         with sf.SoundFile(filename, mode='x', samplerate=samplerate, channels=channels) as file:
