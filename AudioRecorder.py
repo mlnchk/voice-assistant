@@ -12,10 +12,16 @@ class AudioRecorder:
     devices = sd.query_devices()
     device = sd.query_devices(kind = 'input')
 
-    def __init__(self, filename, statusCallback):
-        self.filename = filename
+    def __init__(self, statusCallback):
+        self.filename = None
         self.__recording = False
         self.statusCallback = statusCallback
+
+    def flush_last(self):
+        if self.filename is None:
+            return
+        os.remove(self.filename)
+        self.filename = None
 
     def get_devices(self):
         return self.devices
@@ -29,7 +35,7 @@ class AudioRecorder:
     def record(self):
         device_info = sd.query_devices(self.device['name'], 'input')
         samplerate = int(device_info['default_samplerate'])
-        filename = tempfile.mktemp(prefix='rec_unlimited_', suffix='.wav')
+        self.filename = tempfile.mkstemp(prefix='rec_unlimited_', suffix='.wav')
         channels = 1
         q = queue.Queue()
 
@@ -42,18 +48,19 @@ class AudioRecorder:
                 q.put(indata.copy())
 
         # Make sure the file is opened before recording anything:
-        with sf.SoundFile(filename, mode='x', samplerate=samplerate, channels=channels) as file:
+        with sf.SoundFile(self.filename, mode='x', samplerate=samplerate, channels=channels) as file:
             with sd.InputStream(samplerate=samplerate, device=self.device['name'], channels=channels, callback=callback):
                 print('#' * 80)
                 print('press Ctrl+C to stop the recording')
                 print('#' * 80)
                 while self.__recording:
                     file.write(q.get())
-                print('\nRecording finished: ' + repr(filename))
-                remove_silence(filename)
-                os.remove(filename)
+                print('\nRecording finished: ' + repr(self.filename))
+                remove_silence(self.filename)
+                os.remove(self.filename)
 
     def start(self):
+        self.flush_last()
         self.__recording = True
         self.loop_thread = threading.Thread(target=self.record)
         self.loop_thread.start()
