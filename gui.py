@@ -2,6 +2,7 @@ import wx
 import os.path
 import re
 import subprocess, os, platform
+from shutil import copyfile
 
 import globals as glo
 import AudioRecorder as arec
@@ -55,7 +56,7 @@ class MainFrame (wx.Frame):
                 parent.obj.Add(self.obj, **self.style)
 
     def __init__ (self):
-        self.recorder = arec.AudioRecorder('default', self.__StatusError)
+        self.recorder = arec.AudioRecorder(self.__StatusError)
         wx.Frame.__init__(self,
                           parent = None,
                           style = wx.CAPTION | wx.CLOSE_BOX | wx.MINIMIZE_BOX)
@@ -91,7 +92,6 @@ class MainFrame (wx.Frame):
             self.panel.FindWindow('stop_button').Disable()
             self.menuBar.FindItemById(self.MENU_BAR_NEW).Enable(True)
             self.menuBar.FindItemById(self.MENU_BAR_OPEN).Enable(True)
-            self.menuBar.FindItemById(self.MENU_BAR_SAVE).Enable(False)
             self.menuBar.FindItemById(self.MENU_BAR_SAVE_AS).Enable(False)
             self.menuBar.FindItemById(self.MENU_BAR_LANGUAGE).Enable(True)
             self.menuBar.FindItemById(self.MENU_BAR_ABOUT).Enable(True)
@@ -106,7 +106,6 @@ class MainFrame (wx.Frame):
             self.panel.FindWindow('stop_button').Enable()
             self.menuBar.FindItemById(self.MENU_BAR_NEW).Enable(False)
             self.menuBar.FindItemById(self.MENU_BAR_OPEN).Enable(False)
-            self.menuBar.FindItemById(self.MENU_BAR_SAVE).Enable(False)
             self.menuBar.FindItemById(self.MENU_BAR_SAVE_AS).Enable(False)
             self.menuBar.FindItemById(self.MENU_BAR_LANGUAGE).Enable(False)
             self.menuBar.FindItemById(self.MENU_BAR_ABOUT).Enable(False)
@@ -118,7 +117,6 @@ class MainFrame (wx.Frame):
             self.panel.FindWindow('stop_button').Disable()
             self.menuBar.FindItemById(self.MENU_BAR_NEW).Enable(True)
             self.menuBar.FindItemById(self.MENU_BAR_OPEN).Enable(True)
-            self.menuBar.FindItemById(self.MENU_BAR_SAVE).Enable(True)
             self.menuBar.FindItemById(self.MENU_BAR_SAVE_AS).Enable(True)
             self.menuBar.FindItemById(self.MENU_BAR_LANGUAGE).Enable(True)
             self.menuBar.FindItemById(self.MENU_BAR_ABOUT).Enable(True)
@@ -130,7 +128,6 @@ class MainFrame (wx.Frame):
             self.panel.FindWindow('stop_button').Disable()
             self.menuBar.FindItemById(self.MENU_BAR_NEW).Enable(False)
             self.menuBar.FindItemById(self.MENU_BAR_OPEN).Enable(False)
-            self.menuBar.FindItemById(self.MENU_BAR_SAVE).Enable(False)
             self.menuBar.FindItemById(self.MENU_BAR_SAVE_AS).Enable(False)
             self.menuBar.FindItemById(self.MENU_BAR_LANGUAGE).Enable(False)
             self.menuBar.FindItemById(self.MENU_BAR_ABOUT).Enable(False)
@@ -201,7 +198,6 @@ class MainFrame (wx.Frame):
 
         self.MENU_BAR_NEW = self.autoID.GetID()
         self.MENU_BAR_OPEN = self.autoID.GetID()
-        self.MENU_BAR_SAVE = self.autoID.GetID()
         self.MENU_BAR_SAVE_AS = self.autoID.GetID()
         self.MENU_BAR_EXIT = self.autoID.GetID()
         self.MENU_BAR_LANGUAGE = self.autoID.GetID()
@@ -230,13 +226,6 @@ class MainFrame (wx.Frame):
                 'name' : 'menu_bar_open',
                 'params' : {
                     'id' : self.MENU_BAR_OPEN
-                }
-            },
-            {
-                'menu' : menus[0][0],
-                'name' : 'menu_bar_save',
-                'params' : {
-                    'id' : self.MENU_BAR_SAVE
                 }
             },
             {
@@ -381,6 +370,7 @@ class MainFrame (wx.Frame):
         menuHandlers = {
             self.MENU_BAR_NEW  : self.__Reset,
             self.MENU_BAR_OPEN : self.__Open,
+            self.MENU_BAR_SAVE_AS : self.__SaveAs,
             self.MENU_BAR_EXIT : self.__Exit,
             self.MENU_BAR_REGEXP: self.__InvokeRegexpWindow,
             self.MENU_BAR_ABOUT: self.__InvokeAboutWindow
@@ -434,6 +424,25 @@ class MainFrame (wx.Frame):
                              caption = glo.GetText('file_open_error_dialog_title', lang),
                              style = wx.OK | wx.CENTRE | wx.ICON_WARNING
             ).ShowModal()
+
+    def __SaveAs(self, event):
+        lang = glo.Settings['lang']
+        with wx.FileDialog(self,
+                           glo.GetText('save_dialog_title', lang), 
+                           wildcard = glo.GetText('save_dialog_wildcard', lang) + ' (*.wav)|*.wav',
+                           defaultFile = self.panel.FindWindow('session_name_text_control').GetValue() + '.wav',
+                           style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
+
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return
+            
+            pathname = fileDialog.GetPath()
+            try:
+                copyfile(self.recorder.get_filename(), pathname)
+                self.fileChanged = False
+                self.fileSaved = True
+            except:
+                wx.LogError("Cannot save current data in file '%s'." % pathname)
 
     def __Exit(self, event):
         self.Close()

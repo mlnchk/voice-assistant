@@ -22,6 +22,9 @@ class AudioRecorder:
             return
         os.remove(self.filename)
         self.filename = None
+    
+    def get_filename(self):
+        return self.filename
 
     def get_devices(self):
         return self.devices
@@ -35,7 +38,7 @@ class AudioRecorder:
     def record(self):
         device_info = sd.query_devices(self.device['name'], 'input')
         samplerate = int(device_info['default_samplerate'])
-        self.filename = tempfile.mkstemp(prefix='rec_unlimited_', suffix='.wav')
+        self.filename = tempfile.mktemp(prefix='rec_unlimited_', suffix='.wav')
         channels = 1
         q = queue.Queue()
 

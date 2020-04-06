@@ -45,10 +45,6 @@
             "en":["Open", "Opens file for the new session"],
             "ru":["Открыть", "Открыть файл для сессии"]
         },
-        "menu_bar_save": {
-            "en":["Save", "Saves current session"],
-            "ru":["Сохранить", "Сохранить текущую запись"]
-        },
         "menu_bar_save_as": {
             "en":["Save As...", "Saves current session"],
             "ru":["Сохранить как...", "Сохранить текущую запись"]
