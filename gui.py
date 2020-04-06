@@ -5,8 +5,6 @@ import re
 import globals as glo
 import AudioRecorder as arec
 
-PUBSUB_STOP_MESSAGE = 'stop_record'
-
 def process_path(pathname):
     result = os.path.basename(pathname)
     regexp = glo.Settings['pathname_regexp']
@@ -409,8 +407,10 @@ class MainFrame (wx.Frame):
         ) as fileDialog:
             if fileDialog.ShowModal() == wx.ID_CANCEL:
                 return
-            pathname = process_path(fileDialog.GetPath())
-            self.panel.FindWindow('session_name_text_control').SetValue(pathname)
+            pathname = fileDialog.GetPath()
+            self.panel.FindWindow('session_name_text_control').SetValue(process_path(pathname))
+            # open file by os
+
 
     def __Exit(self, event):
         self.Close()
@@ -419,6 +419,7 @@ class MainFrame (wx.Frame):
         self.aboutDialog.ShowModal()
 
     def __InvokeRegexpWindow(self, event):
+        self.regexpDialog.UpdateContent()
         self.regexpDialog.ShowModal()
 
     def UpdateContent(self):
@@ -526,7 +527,8 @@ class MainFrame (wx.Frame):
 
         def __InitUI(self):
             panel = self.panel = wx.Panel(self)
-            tc = wx.TextCtrl(panel, name = 'regexp_dialog_text_control')
+            self.regexpTextCtrl = wx.TextCtrl(panel, name = 'regexp_dialog_text_control')
+            self.regexpSpinCtrl = wx.SpinCtrl(panel, name = 'regexp_dialog_spin_control', min = 0, max = 99)
             element = MainFrame.element
             elements = element(
                 wx.BoxSizer(wx.VERTICAL),
@@ -537,7 +539,21 @@ class MainFrame (wx.Frame):
                         { 'flag' : wx.ALL | wx.EXPAND, 'border' : 3 },
                         [
                             element(wx.CheckBox(panel, name = 'regexp_dialog_checkbox')),
-                            element(tc)
+                            element(self.regexpTextCtrl),
+                            element(
+                                wx.BoxSizer(wx.HORIZONTAL),
+                                { 'flag' : wx.ALL | wx.EXPAND },
+                                [
+                                    element(
+                                        wx.StaticText(panel, name = 'regexp_dialog_group_number'),
+                                        { 'flag' : wx.CENTER | wx.ALL, 'border' : 3 }
+                                    ),
+                                    element(
+                                        self.regexpSpinCtrl,
+                                        { 'flag' : wx.EXPAND | wx.ALL, 'border' : 3 }
+                                    )
+                                ]
+                            )
                         ]
                     ),
                     element(
@@ -552,19 +568,24 @@ class MainFrame (wx.Frame):
             )
             elements.Compose()
 
-            tcsize = tc.GetBestSize().Scale(4.0, 1.0)
-            tc.SetMinSize(tcsize)
+            self.defaultFont = self.regexpTextCtrl.GetDefaultStyle()
+            self.groupFont = wx.TextAttr(wx.RED)
 
             panel.SetSizer(elements.obj)
 
         def __SetContent(self):
             lang = glo.Settings['lang']
             self.SetTitle(glo.GetText('regexp_frame_title', lang))
+
             cb = self.panel.FindWindow('regexp_dialog_checkbox')
             cb.SetValue(glo.Settings['pathname_regexp'][0])
             tc = self.panel.FindWindow('regexp_dialog_text_control')
             tc.SetValue(glo.Settings['pathname_regexp'][1])
             tc.Enable(cb.IsChecked())
+            sc = self.panel.FindWindow('regexp_dialog_spin_control')
+            sc.SetValue(glo.Settings['pathname_regexp'][2])
+            sc.Enable(cb.IsChecked())
+
             for element in self.panel.GetChildren():
                 name = element.GetName()
                 text = glo.GetText(name, lang)
@@ -578,6 +599,7 @@ class MainFrame (wx.Frame):
         def __Bind(self):
             self.Bind(wx.EVT_PAINT, self.__OnRepaint)
             self.panel.FindWindow('regexp_dialog_checkbox').Bind(wx.EVT_CHECKBOX, self.__CheckBoxClick)
+            self.regexpTextCtrl.Bind(wx.EVT_TEXT, self.__TextCtrlChanged)
             self.panel.FindWindow('regexp_dialog_save_button').Bind(wx.EVT_BUTTON, self.__SaveBtnClick)
             self.panel.FindWindow('regexp_dialog_cancel_button').Bind(wx.EVT_BUTTON, self.__CancelBtnClick)
 
@@ -594,12 +616,23 @@ class MainFrame (wx.Frame):
         def __CheckBoxClick(self, event):
             state = event.IsChecked()
             self.panel.FindWindow('regexp_dialog_text_control').Enable(state)
+            self.panel.FindWindow('regexp_dialog_spin_control').Enable(state)
+
+        def __TextCtrlChanged(self, event):
+            text = self.regexpTextCtrl.GetValue()
+            if len(text) > 0:
+                try:
+                    self.compiledRegexp = re.compile(text)
+                except re.error:
+                    return
+            self.regexpSpinCtrl.SetMax(self.compiledRegexp.groups)
+
 
         def __SaveBtnClick(self, event):
             glo.Settings['pathname_regexp'] = (
                 self.panel.FindWindow('regexp_dialog_checkbox').IsChecked(),
                 self.panel.FindWindow('regexp_dialog_text_control').GetValue(),
-                1
+                self.panel.FindWindow('regexp_dialog_spin_control').GetValue()
             )
             self.EndModal(wx.ID_OK)
 

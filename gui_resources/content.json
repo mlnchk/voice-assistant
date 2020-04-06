@@ -85,6 +85,10 @@
             "en":"Use regular expression",
             "ru":"Использовать регулярное выражение"
         },
+        "regexp_dialog_group_number": {
+            "en":"Group number:",
+            "ru":"Номер группы:"
+        },
         "regexp_dialog_save_button": {
             "en":"Save",
             "ru":"Сохранить"
