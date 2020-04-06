@@ -356,6 +356,7 @@ class MainFrame (wx.Frame):
         self.recorder.set_device(self.devices[self.device])
 
     def __RecordBtn(self, event):
+        
         self.__SetState(self.STATE_RECORD)
         self.recorder.start()
 
@@ -392,9 +393,13 @@ class MainFrame (wx.Frame):
         return cl
 
     def __Reset(self, event):
-        self.__SetState(self.STATE_RESET)
+        if self.__SaveQuestion():
+            self.__SetState(self.STATE_RESET)
 
     def __Open(self, event):
+        if not self.__SaveQuestion():
+            return
+        self.__SetState(self.STATE_RESET)
         lang = glo.Settings['lang']
         with wx.FileDialog(
             self,
@@ -425,24 +430,40 @@ class MainFrame (wx.Frame):
                              style = wx.OK | wx.CENTRE | wx.ICON_WARNING
             ).ShowModal()
 
-    def __SaveAs(self, event):
+    def __SaveQuestion(self):
+        lang = glo.Settings['lang']
+        if self.fileChanged and not self.fileSaved:
+            if wx.MessageBox(glo.GetText('save_dialog_question_text', lang),
+                             glo.GetText('save_dialog_question_title', lang),
+                             wx.ICON_QUESTION | wx.YES_NO) == wx.YES:
+                return True
+            return False
+        return True
+
+    def __SaveDialog(self):
         lang = glo.Settings['lang']
         with wx.FileDialog(self,
                            glo.GetText('save_dialog_title', lang), 
                            wildcard = glo.GetText('save_dialog_wildcard', lang) + ' (*.wav)|*.wav',
                            defaultFile = self.panel.FindWindow('session_name_text_control').GetValue() + '.wav',
-                           style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
+                           style = wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT
+            ) as fileDialog:
 
             if fileDialog.ShowModal() == wx.ID_CANCEL:
                 return
             
             pathname = fileDialog.GetPath()
             try:
-                copyfile(self.recorder.get_filename(), pathname)
-                self.fileChanged = False
-                self.fileSaved = True
+                #copyfile(self.recorder.get_filename(), pathname)
+                return True
             except:
                 wx.LogError("Cannot save current data in file '%s'." % pathname)
+                return False
+
+    def __SaveAs(self, event):
+        if self.__SaveDialog():
+            self.fileChanged = False
+            self.fileSaved = True
 
     def __Exit(self, event):
         self.Close()
@@ -473,12 +494,9 @@ class MainFrame (wx.Frame):
     def __OnClose(self, event):
         if self.state == self.STATE_RECORD:
             self.__StopBtn(event)
-        if event.CanVeto() and (self.fileChanged and not self.fileSaved):
-            if wx.MessageBox("The file has not been saved... continue closing?",
-                             "Please confirm",
-                             wx.ICON_QUESTION | wx.YES_NO) != wx.YES:
-                event.Veto()
-                return
+        if event.CanVeto() and not self.__SaveQuestion():
+            event.Veto()
+            return
 
         self.Destroy()
 

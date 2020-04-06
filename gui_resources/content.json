@@ -81,6 +81,14 @@
             "en":"Opening error",
             "ru":"Ошибка открытия"
         },
+        "save_dialog_question_text": {
+            "en":"File not saved. Continue?",
+            "ru":"Изменения не сохранены. Продолжить?"
+        },
+        "save_dialog_question_title": {
+            "en":"Please confirm",
+            "ru":"Подтверждение"
+        },
         "regexp_frame_title": {
             "en":"Regular expression",
             "ru":"Регулярное выражение"
