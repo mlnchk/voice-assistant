@@ -65,6 +65,22 @@
             "en":["About", "About the application"],
             "ru":["О программе", "Информация о приложении"]
         },
+        "status_bar_reset": {
+            "en":"Clean session",
+            "ru":"Чистая сессия"
+        },
+        "status_bar_record": {
+            "en":"Recording...",
+            "ru":"Запись..."
+        },
+        "status_bar_stop": {
+            "en":"Unsaved session",
+            "ru":"Сессия не сохранена"
+        },
+        "status_bar_saved": {
+            "en":"Session saved",
+            "ru":"Сессия сохранена"
+        },
         "file_open_dialog_title": {
             "en":"Open file",
             "ru":"Открыть файл"

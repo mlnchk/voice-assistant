@@ -73,7 +73,14 @@ class MainFrame (wx.Frame):
         self.STATE_RESET = self.autoID.GetID()
         self.STATE_RECORD = self.autoID.GetID()
         self.STATE_STOP = self.autoID.GetID()
-        self.STATE_LOADING = self.autoID.GetID()
+        self.STATE_SAVED = self.autoID.GetID()
+
+        self.statusTexts = {
+            self.STATE_RESET : 'status_bar_reset',
+            self.STATE_RECORD : 'status_bar_record',
+            self.STATE_STOP : 'status_bar_stop',
+            self.STATE_SAVED : 'status_bar_saved'
+        }
 
         self.availableLangs = glo.GetAvailableLanguages()
 
@@ -121,22 +128,25 @@ class MainFrame (wx.Frame):
             self.menuBar.FindItemById(self.MENU_BAR_LANGUAGE).Enable(True)
             self.menuBar.FindItemById(self.MENU_BAR_ABOUT).Enable(True)
 
-        def state_loading():
+        def state_saved():
             self.state = self.STATE_LOADING
-            self.panel.FindWindow('input_device_choice').Disable()
-            self.panel.FindWindow('record_button').Disable()
+            self.fileOpened = True
+            self.fileChanged = False
+            self.fileSaved = True
+            self.panel.FindWindow('input_device_choice').Enable()
+            self.panel.FindWindow('record_button').Enable()
             self.panel.FindWindow('stop_button').Disable()
-            self.menuBar.FindItemById(self.MENU_BAR_NEW).Enable(False)
-            self.menuBar.FindItemById(self.MENU_BAR_OPEN).Enable(False)
-            self.menuBar.FindItemById(self.MENU_BAR_SAVE_AS).Enable(False)
-            self.menuBar.FindItemById(self.MENU_BAR_LANGUAGE).Enable(False)
-            self.menuBar.FindItemById(self.MENU_BAR_ABOUT).Enable(False)
+            self.menuBar.FindItemById(self.MENU_BAR_NEW).Enable(True)
+            self.menuBar.FindItemById(self.MENU_BAR_OPEN).Enable(True)
+            self.menuBar.FindItemById(self.MENU_BAR_SAVE_AS).Enable(True)
+            self.menuBar.FindItemById(self.MENU_BAR_LANGUAGE).Enable(True)
+            self.menuBar.FindItemById(self.MENU_BAR_ABOUT).Enable(True)
 
         self.statesHandlers = {
-            self.STATE_RESET   : state_reset,
-            self.STATE_RECORD  : state_record,
-            self.STATE_STOP    : state_stop,
-            self.STATE_LOADING : state_loading
+            self.STATE_RESET  : state_reset,
+            self.STATE_RECORD : state_record,
+            self.STATE_STOP   : state_stop,
+            self.STATE_SAVED  : state_saved
         }
 
     def __InitUI (self):
@@ -297,10 +307,7 @@ class MainFrame (wx.Frame):
 
     def __ComposeStatusBar (self, panel):
         sb = self.statusBar = wx.StatusBar(panel)
-        sb.SetFieldsCount(2)
-        sb.SetStatusWidths([-3, -1])
-        sb.SetStatusText('', 0)
-        sb.SetStatusText('', 1)
+        sb.SetFieldsCount()
         self.SetStatusBar(sb)
 
     def __SetContent (self):
@@ -309,6 +316,7 @@ class MainFrame (wx.Frame):
         self.SetTitle(glo.GetText('main_frame_title', lang))
         self.__SetWidgetsContent(lang)
         self.__SetMenuBarContent(lang)
+        self.__SetStatusBarContent(lang)
 
     def __SetWidgetsContent(self, lang):
         self.__SetDevicesList(self.panel.FindWindow('input_device_choice'))
@@ -339,6 +347,9 @@ class MainFrame (wx.Frame):
                 obj.SetHelp(text[1])
         self.menuBar.SetMenus(menus)
 
+    def __SetStatusBarContent(self, lang):
+        self.statusBar.SetStatusText(glo.GetText(self.statusTexts[self.state], lang))
+
     def __Bind(self):
         panel = self.panel
         self.__BindWidgets(panel)
@@ -356,9 +367,9 @@ class MainFrame (wx.Frame):
         self.recorder.set_device(self.devices[self.device])
 
     def __RecordBtn(self, event):
-        
-        self.__SetState(self.STATE_RECORD)
-        self.recorder.start()
+        if self.__SaveQuestion:
+            self.__SetState(self.STATE_RECORD)
+            self.recorder.start()
 
     def __StatusError(self):
         self.__SetState(self.STATE_STOP)
@@ -462,8 +473,7 @@ class MainFrame (wx.Frame):
 
     def __SaveAs(self, event):
         if self.__SaveDialog():
-            self.fileChanged = False
-            self.fileSaved = True
+            self.__SetState(self.STATE_SAVED)
 
     def __Exit(self, event):
         self.Close()
@@ -485,6 +495,7 @@ class MainFrame (wx.Frame):
     def __SetState(self, state):
         if state in self.statesHandlers:
             self.statesHandlers[state]()
+            self.__SetStatusBarContent(glo.Settings['lang'])
 
     def __OnRepaint (self, event):
         sizer = self.panel.GetSizer()
