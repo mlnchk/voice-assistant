@@ -5,16 +5,6 @@ import re
 import globals as glo
 import AudioRecorder as arec
 
-def process_path(pathname):
-    result = os.path.basename(pathname)
-    regexp = glo.Settings['pathname_regexp']
-    if regexp[0]:
-        search_result = re.search(regexp[1], pathname)
-        if search_result is None:
-            return result
-        return search_result.group(regexp[2])
-    return result
-
 class AppCore(wx.App):
 
     def OnInit(self):
@@ -34,6 +24,18 @@ class AutoID :
         return self.id
 
 class MainFrame (wx.Frame):
+
+    def __process_path(self, pathname):
+        result = os.path.basename(pathname)
+        regexp = glo.Settings['pathname_regexp']
+        if regexp[0]:
+            if self.regexpDialog.compiledRegexp is None:
+                self.regexpDialog.compiledRegexp = re.compile(regexp[1])
+            search_result = self.regexpDialog.compiledRegexp.search(pathname)
+            if search_result is None:
+                return result
+            return search_result.group(regexp[2])
+        return result
 
     class element :
 
@@ -408,7 +410,7 @@ class MainFrame (wx.Frame):
             if fileDialog.ShowModal() == wx.ID_CANCEL:
                 return
             pathname = fileDialog.GetPath()
-            self.panel.FindWindow('session_name_text_control').SetValue(process_path(pathname))
+            self.panel.FindWindow('session_name_text_control').SetValue(self.__process_path(pathname))
             # open file by os
 
 
@@ -626,7 +628,6 @@ class MainFrame (wx.Frame):
                 except re.error:
                     return
             self.regexpSpinCtrl.SetMax(self.compiledRegexp.groups)
-
 
         def __SaveBtnClick(self, event):
             glo.Settings['pathname_regexp'] = (
