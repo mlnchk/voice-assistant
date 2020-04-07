@@ -1,7 +1,7 @@
 from pydub import AudioSegment
 from pydub.silence import split_on_silence
 
-MIN_SILENCE_LEN = 1000 # At least 2000 ms long.
+MIN_SILENCE_LEN = 2000 # At least 2000 ms long.
 SILENCE_THRESH = -80 # Consider a chunk silent if it's quieter than -50 dBFS.
 
 # Normalize a chunk to a target amplitude.
@@ -17,17 +17,13 @@ def remove_silence(filename):
     chunks = split_on_silence(song, min_silence_len = MIN_SILENCE_LEN, silence_thresh = SILENCE_THRESH)
     result = AudioSegment.empty()
 
+    # Create a silence chunk that's 0.5 seconds (or 500 ms) long for padding.
+    silence_chunk = AudioSegment.silent(duration=500)
     # Process each chunk with your parameters
     for i, chunk in enumerate(chunks):
-        # Create a silence chunk that's 0.5 seconds (or 500 ms) long for padding.
-        silence_chunk = AudioSegment.silent(duration=200)
-
         # Add the padding chunk to beginning and end of the entire chunk.
         audio_chunk = silence_chunk + chunk + silence_chunk
-
         # Normalize the entire chunk.
-        normalized_chunk = match_target_amplitude(audio_chunk, -20.0)
-
-        result += normalized_chunk
-
+        # normalized_chunk = match_target_amplitude(audio_chunk, -20.0)
+        result += audio_chunk
     result.export("no_silence_" + filename.split('/')[-1], format="wav")
