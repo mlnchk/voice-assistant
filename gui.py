@@ -2,7 +2,14 @@ import wx
 import os.path
 import re
 import subprocess, os, platform
+import wave
 from shutil import copyfile
+import numpy as np
+
+import matplotlib
+from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
+from matplotlib.backends.backend_wx import NavigationToolbar2Wx
+from matplotlib.figure import Figure
 
 import globals as glo
 import AudioRecorder as arec
@@ -64,6 +71,7 @@ class MainFrame (wx.Frame):
         self.autoID = AutoID()
         self.aboutDialog = self.AboutDialog(self)
         self.regexpDialog = self.RegexpDialog(self)
+        self.vcutterDialog = self.VolumeCutterDialog(self)
         self.__InitStateFields()
         self.__InitUI()
         self.UpdateContent()
@@ -73,12 +81,14 @@ class MainFrame (wx.Frame):
         self.STATE_RESET = self.autoID.GetID()
         self.STATE_RECORD = self.autoID.GetID()
         self.STATE_STOP = self.autoID.GetID()
+        self.STATE_LOADING = self.autoID.GetID()
         self.STATE_SAVED = self.autoID.GetID()
 
         self.statusTexts = {
             self.STATE_RESET : 'status_bar_reset',
             self.STATE_RECORD : 'status_bar_record',
             self.STATE_STOP : 'status_bar_stop',
+            self.STATE_LOADING : 'status_bar_loading',
             self.STATE_SAVED : 'status_bar_saved'
         }
 
@@ -101,6 +111,7 @@ class MainFrame (wx.Frame):
             self.menuBar.FindItemById(self.MENU_BAR_OPEN).Enable(True)
             self.menuBar.FindItemById(self.MENU_BAR_SAVE_AS).Enable(False)
             self.menuBar.FindItemById(self.MENU_BAR_LANGUAGE).Enable(True)
+            self.menuBar.FindItemById(self.MENU_BAR_REGEXP).Enable(True)
             self.menuBar.FindItemById(self.MENU_BAR_ABOUT).Enable(True)
 
         def state_record():
@@ -115,6 +126,7 @@ class MainFrame (wx.Frame):
             self.menuBar.FindItemById(self.MENU_BAR_OPEN).Enable(False)
             self.menuBar.FindItemById(self.MENU_BAR_SAVE_AS).Enable(False)
             self.menuBar.FindItemById(self.MENU_BAR_LANGUAGE).Enable(False)
+            self.menuBar.FindItemById(self.MENU_BAR_REGEXP).Enable(False)
             self.menuBar.FindItemById(self.MENU_BAR_ABOUT).Enable(False)
 
         def state_stop():
@@ -126,10 +138,23 @@ class MainFrame (wx.Frame):
             self.menuBar.FindItemById(self.MENU_BAR_OPEN).Enable(True)
             self.menuBar.FindItemById(self.MENU_BAR_SAVE_AS).Enable(True)
             self.menuBar.FindItemById(self.MENU_BAR_LANGUAGE).Enable(True)
+            self.menuBar.FindItemById(self.MENU_BAR_REGEXP).Enable(True)
             self.menuBar.FindItemById(self.MENU_BAR_ABOUT).Enable(True)
 
-        def state_saved():
+        def state_loading():
             self.state = self.STATE_LOADING
+            self.panel.FindWindow('input_device_choice').Disable()
+            self.panel.FindWindow('record_button').Disable()
+            self.panel.FindWindow('stop_button').Disable()
+            self.menuBar.FindItemById(self.MENU_BAR_NEW).Enable(False)
+            self.menuBar.FindItemById(self.MENU_BAR_OPEN).Enable(False)
+            self.menuBar.FindItemById(self.MENU_BAR_SAVE_AS).Enable(False)
+            self.menuBar.FindItemById(self.MENU_BAR_LANGUAGE).Enable(False)
+            self.menuBar.FindItemById(self.MENU_BAR_REGEXP).Enable(False)
+            self.menuBar.FindItemById(self.MENU_BAR_ABOUT).Enable(False)
+
+        def state_saved():
+            self.state = self.STATE_SAVED
             self.fileOpened = True
             self.fileChanged = False
             self.fileSaved = True
@@ -140,12 +165,14 @@ class MainFrame (wx.Frame):
             self.menuBar.FindItemById(self.MENU_BAR_OPEN).Enable(True)
             self.menuBar.FindItemById(self.MENU_BAR_SAVE_AS).Enable(True)
             self.menuBar.FindItemById(self.MENU_BAR_LANGUAGE).Enable(True)
+            self.menuBar.FindItemById(self.MENU_BAR_REGEXP).Enable(True)
             self.menuBar.FindItemById(self.MENU_BAR_ABOUT).Enable(True)
 
         self.statesHandlers = {
             self.STATE_RESET  : state_reset,
             self.STATE_RECORD : state_record,
             self.STATE_STOP   : state_stop,
+            self.STATE_LOADING: state_loading,
             self.STATE_SAVED  : state_saved
         }
 
@@ -377,6 +404,7 @@ class MainFrame (wx.Frame):
     def __StopBtn(self, event):
         self.recorder.stop()
         self.__SetState(self.STATE_STOP)
+        self.__InvokeVcutterWindow(event)
 
     def __BindMenus(self, panel):
         menuHandlers = {
@@ -485,12 +513,17 @@ class MainFrame (wx.Frame):
         self.regexpDialog.UpdateContent()
         self.regexpDialog.ShowModal()
 
+    def __InvokeVcutterWindow(self, event):
+        self.vcutterDialog.UpdateContent()
+        self.vcutterDialog.ShowModal()
+
     def UpdateContent(self):
         self.__SetContent()
         self.Refresh()
         self.Update()
         self.aboutDialog.UpdateContent()
         self.regexpDialog.UpdateContent()
+        self.vcutterDialog.UpdateContent()
 
     def __SetState(self, state):
         if state in self.statesHandlers:
@@ -531,15 +564,9 @@ class MainFrame (wx.Frame):
                         wx.BoxSizer(wx.VERTICAL),
                         { 'flag' : wx.ALL | wx.CENTER, 'border' : 3 },
                         [
-                            element(
-                                wx.StaticBitmap(panel, bitmap = glo.AppIconBitmap)
-                            ),
-                            element(
-                                wx.StaticText(panel, name = 'about_dialog_text')
-                            ),
-                            element(
-                                wx.Button(panel, name = 'about_dialog_close_button')
-                            )
+                            element(wx.StaticBitmap(panel, bitmap = glo.AppIconBitmap)),
+                            element(wx.StaticText(panel, name = 'about_dialog_text')),
+                            element(wx.Button(panel, name = 'about_dialog_close_button'))
                         ]
                     )
                 ]
@@ -629,9 +656,6 @@ class MainFrame (wx.Frame):
             )
             elements.Compose()
 
-            self.defaultFont = self.regexpTextCtrl.GetDefaultStyle()
-            self.groupFont = wx.TextAttr(wx.RED)
-
             panel.SetSizer(elements.obj)
 
         def __SetContent(self):
@@ -697,4 +721,148 @@ class MainFrame (wx.Frame):
             self.EndModal(wx.ID_OK)
 
         def __CancelBtnClick(self, event):
+            self.EndModal(wx.ID_OK)
+
+    class VolumeCutterDialog(wx.Dialog):
+
+        class CanvasPanel(wx.Panel):
+
+            def __init__(self, parent):
+                wx.Panel.__init__(self, parent)
+
+                self.figure = Figure(
+                    figsize = (2, 1),
+                    dpi = 256,
+                    facecolor = '#000000'
+                )
+                self.ax = self.figure.add_subplot(
+                    111,
+                    xmargin = 0,
+                    ymargin = 0,
+                    autoscale_on = True
+                )
+                self.ax.set_axis_off()
+
+                self.figure.set_tight_layout({'pad' : 0})
+                
+                defaultData = ([0, 1], [0, 1])
+
+                self.level_line, = self.ax.plot(
+                    *defaultData,
+                    c = '#ff0000',
+                    lw = 0.5
+                )
+
+                self.canvas = FigureCanvas(self, -1, self.figure)
+            
+            def __refresh_background(self):
+                self.level_line.set_visible(False)
+                self.canvas.draw()
+                self.background = self.canvas.copy_from_bbox(self.ax.bbox)
+                self.level_line.set_visible(True)
+
+            def set_level_content(self, h):
+                self.level_line.set_ydata([h, h])
+                self.canvas.restore_region(self.background)
+                self.ax.draw_artist(self.level_line)
+                self.canvas.blit(self.ax.bbox)
+
+            def set_graph_content(self, y_data):
+                x_data = np.arange(0.0, 1.0, 1.0 / len(y_data))
+                self.graph_line = self.ax.stackplot(
+                    x_data,
+                    y_data,
+                    colors = ['#00ff00'],
+                    lw = 0
+                )
+                self.__refresh_background()
+
+        def __init__(self, parent):
+            super().__init__(parent = parent,
+                             style = wx.CAPTION)
+            self.__InitUI()
+            self.__Bind()
+            self.UpdateContent()
+
+        def __InitUI(self):
+            panel = self.panel = wx.Panel(self)
+
+            self.canvasPanel = self.CanvasPanel(panel)
+            self.MAX_LEVEL = 128
+            self.slider = wx.Slider(panel, style = wx.SL_VERTICAL | wx.SL_INVERSE, minValue = 0, maxValue = self.MAX_LEVEL)
+
+            element = MainFrame.element
+            elements = element(
+                wx.BoxSizer(wx.VERTICAL),
+                { 'flag' : wx.ALL | wx.EXPAND, 'border' : 3 },
+                [
+                    element(
+                        wx.BoxSizer(wx.HORIZONTAL),
+                        { 'flag' : wx.ALL | wx.EXPAND, 'border' : 3 },
+                        [
+                            element(self.slider),
+                            element(self.canvasPanel)
+                        ]
+                    ),
+                    element(
+                        wx.BoxSizer(wx.HORIZONTAL),
+                        { 'proportion' : 1, 'flag' : wx.ALL ^ wx.TOP | wx.EXPAND, 'border' : 3 },
+                        [
+                            element(wx.Button(panel, name = 'vcutter_dialog_cut_button')),
+                            element(wx.Button(panel, name = 'vcutter_dialog_dont_button'))
+                        ]
+                    )
+                ]
+            )
+            elements.Compose()
+
+            panel.SetSizer(elements.obj)
+
+        def __SetContent(self, filename):
+            lang = glo.Settings['lang']
+            self.SetTitle(glo.GetText('vcutter_frame_title', lang))
+            for element in self.panel.GetChildren():
+                name = element.GetName()
+                text = glo.GetText(name, lang)
+                variable = glo.GetText(name, 'var')
+                varstr = ''
+                if variable != 'n/a':
+                    varstr = glo.Get(variable)
+                if text != 'n/a':
+                    element.SetLabel(text + varstr)
+            
+            if filename is not None:
+                file = wave.open(filename)
+                data = np.fromstring(file.readframes(-1), "Int16")
+                self.soundData = np.log10(abs(data))
+
+                self.soundDataMax = max(self.soundData)
+                self.soundData = self.soundData / self.soundDataMax
+                
+                self.canvasPanel.set_graph_content(self.soundData)
+                self.canvasPanel.set_level_content(self.slider.GetValue())
+
+        def __Bind(self):
+            self.Bind(wx.EVT_PAINT, self.__OnRepaint)
+            self.slider.Bind(wx.EVT_SLIDER, self.__SliderChanged)
+            self.panel.FindWindow('vcutter_dialog_cut_button').Bind(wx.EVT_BUTTON, self.__CutBtnClick)
+            self.panel.FindWindow('vcutter_dialog_dont_button').Bind(wx.EVT_BUTTON, self.__DontBtnClick)
+
+        def UpdateContent(self, filename = None):
+            self.__SetContent(filename)
+            self.Refresh()
+            self.Update()
+
+        def __SliderChanged(self, event):
+            self.canvasPanel.set_level_content(event.GetInt()/self.MAX_LEVEL)
+
+        def __OnRepaint(self, event):
+            sizer = self.panel.GetSizer()
+            sizer.Layout()
+            sizer.Fit(self)
+
+        def __CutBtnClick(self, event):
+            self.EndModal(wx.ID_OK)
+
+        def __DontBtnClick(self, event):
             self.EndModal(wx.ID_OK)

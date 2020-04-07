@@ -77,6 +77,10 @@
             "en":"Unsaved session",
             "ru":"Сессия не сохранена"
         },
+        "status_bar_loading": {
+            "en":"Processing...",
+            "ru":"Обработка..."
+        },
         "status_bar_saved": {
             "en":"Session saved",
             "ru":"Сессия сохранена"
@@ -137,6 +141,18 @@
         "about_dialog_close_button" : {
             "en":"Close",
             "ru":"Закрыть"
+        },
+        "vcutter_frame_title" : {
+            "en":"Cut by volume",
+            "ru":"Обрезка по громкости"
+        },
+        "vcutter_dialog_cut_button" : {
+            "en":"Cut",
+            "ru":"Обрезать"
+        },
+        "vcutter_dialog_dont_button" : {
+            "en":"Don't cut",
+            "ru":"Не обрезать"
         }
     }
 }
