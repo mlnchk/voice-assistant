@@ -13,6 +13,7 @@ from matplotlib.figure import Figure
 
 import globals as glo
 import AudioRecorder as arec
+from silence import remove_silence
 
 class AppCore(wx.App):
 
@@ -731,6 +732,8 @@ class MainFrame (wx.Frame):
 
     class VolumeCutterDialog(wx.Dialog):
 
+        filename = None
+
         class CanvasPanel(wx.Panel):
 
             def __init__(self, parent):
@@ -774,7 +777,9 @@ class MainFrame (wx.Frame):
                 self.canvas.blit(self.ax.bbox)
 
             def set_graph_content(self, y_data):
-                x_data = np.arange(0.0, 1.0, 1.0 / len(y_data))
+                datalen = len(y_data)
+                fact = 1.0 / datalen
+                x_data = [i * fact for i in range(datalen)]
                 self.graph_line = self.ax.stackplot(
                     x_data,
                     y_data,
@@ -838,6 +843,7 @@ class MainFrame (wx.Frame):
                     element.SetLabel(text + varstr)
             
             if filename is not None:
+                self.filename = filename
                 file = wave.open(filename)
                 data = np.fromstring(file.readframes(-1), "Int16")
                 self.soundData = np.log10([abs(x) + 1 for x in data])
@@ -868,6 +874,8 @@ class MainFrame (wx.Frame):
             sizer.Fit(self)
 
         def __CutBtnClick(self, event):
+            if self.filename is not None:
+                remove_silence(self.filename)
             self.EndModal(wx.ID_OK)
 
         def __DontBtnClick(self, event):
