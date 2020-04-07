@@ -840,7 +840,7 @@ class MainFrame (wx.Frame):
             if filename is not None:
                 file = wave.open(filename)
                 data = np.fromstring(file.readframes(-1), "Int16")
-                self.soundData = np.log10(abs(data))
+                self.soundData = np.log10([abs(x) + 1 for x in data])
 
                 self.soundDataMax = max(self.soundData)
                 self.soundData = self.soundData / self.soundDataMax
