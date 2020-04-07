@@ -404,6 +404,8 @@ class MainFrame (wx.Frame):
     def __StopBtn(self, event):
         self.recorder.stop()
         self.__SetState(self.STATE_LOADING)
+        while not self.recorder.if_fileClosed():
+            continue
         self.__InvokeVcutterWindow(event)
         self.__SetState(self.STATE_STOP)
 
@@ -517,7 +519,7 @@ class MainFrame (wx.Frame):
         self.regexpDialog.ShowModal()
 
     def __InvokeVcutterWindow(self, event):
-        self.vcutterDialog.UpdateContent()
+        self.vcutterDialog.UpdateContent(self.recorder.get_filename())
         self.vcutterDialog.ShowModal()
 
     def UpdateContent(self):

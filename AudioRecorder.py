@@ -16,6 +16,7 @@ class AudioRecorder:
         self.filename = None
         self.__recording = False
         self.statusCallback = statusCallback
+        self.fileClosed = True
 
     def flush_last(self):
         if self.filename is None:
@@ -23,6 +24,9 @@ class AudioRecorder:
         os.remove(self.filename)
         self.filename = None
     
+    def if_fileClosed(self):
+        return self.fileClosed
+
     def get_filename(self):
         return self.filename
 
@@ -43,6 +47,7 @@ class AudioRecorder:
             suffix='.wav',
             delete=False
         )
+        self.fileClosed = False
         self.filename = self.file.name
         channels = 1
         q = queue.Queue()
@@ -65,6 +70,7 @@ class AudioRecorder:
                     file.write(q.get())
                 print('\nRecording finished: ' + repr(self.filename))
         self.file.close()
+        self.fileClosed = True
 
     def start(self):
         self.flush_last()
