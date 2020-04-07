@@ -3,7 +3,7 @@ import os.path
 import re
 import subprocess, os, platform
 import wave
-from shutil import copyfile
+from shutil import copy
 import numpy as np
 
 import matplotlib
@@ -394,17 +394,18 @@ class MainFrame (wx.Frame):
         self.recorder.set_device(self.devices[self.device])
 
     def __RecordBtn(self, event):
-        if self.__SaveQuestion:
-            self.__SetState(self.STATE_RECORD)
+        if self.__SaveQuestion():
             self.recorder.start()
+            self.__SetState(self.STATE_RECORD)
 
     def __StatusError(self):
         self.__SetState(self.STATE_STOP)
 
     def __StopBtn(self, event):
         self.recorder.stop()
-        self.__SetState(self.STATE_STOP)
+        self.__SetState(self.STATE_LOADING)
         self.__InvokeVcutterWindow(event)
+        self.__SetState(self.STATE_STOP)
 
     def __BindMenus(self, panel):
         menuHandlers = {
@@ -481,22 +482,26 @@ class MainFrame (wx.Frame):
 
     def __SaveDialog(self):
         lang = glo.Settings['lang']
+        sessionName = self.panel.FindWindow('session_name_text_control').GetValue()
+        if sessionName == '':
+            sessionName = glo.GetText('default_session_name', lang)
         with wx.FileDialog(self,
                            glo.GetText('save_dialog_title', lang), 
                            wildcard = glo.GetText('save_dialog_wildcard', lang) + ' (*.wav)|*.wav',
-                           defaultFile = self.panel.FindWindow('session_name_text_control').GetValue() + '.wav',
+                           defaultFile = sessionName + '.wav',
                            style = wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT
             ) as fileDialog:
 
             if fileDialog.ShowModal() == wx.ID_CANCEL:
                 return
             
-            pathname = fileDialog.GetPath()
             try:
-                #copyfile(self.recorder.get_filename(), pathname)
+                copy(self.recorder.get_filename(), fileDialog.GetPath())
                 return True
             except:
-                wx.LogError("Cannot save current data in file '%s'." % pathname)
+                wx.MessageBox(glo.GetText('save_dialog_error_text', lang),
+                              glo.GetText('save_dialog_error_title', lang),
+                              wx.ICON_ERROR | wx.OK)
                 return False
 
     def __SaveAs(self, event):
@@ -542,6 +547,7 @@ class MainFrame (wx.Frame):
             event.Veto()
             return
 
+        self.recorder.flush_last()
         self.Destroy()
 
     class AboutDialog(wx.Dialog):

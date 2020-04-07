@@ -101,6 +101,10 @@
             "en":"Opening error",
             "ru":"Ошибка открытия"
         },
+        "default_session_name": {
+            "en":"Unnamed",
+            "ru":"Безымянный"
+        },
         "save_dialog_question_text": {
             "en":"File not saved. Continue?",
             "ru":"Изменения не сохранены. Продолжить?"
@@ -108,6 +112,14 @@
         "save_dialog_question_title": {
             "en":"Please confirm",
             "ru":"Подтверждение"
+        },
+        "save_dialog_error_text": {
+            "en":"File couldn't be saved!",
+            "ru":"Файл не может быть сохранен!"
+        },
+        "save_dialog_error_title": {
+            "en":"Save error",
+            "ru":"Ошибка сохранения"
         },
         "regexp_frame_title": {
             "en":"Regular expression",

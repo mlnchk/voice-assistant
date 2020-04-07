@@ -38,7 +38,12 @@ class AudioRecorder:
     def record(self):
         device_info = sd.query_devices(self.device['name'], 'input')
         samplerate = int(device_info['default_samplerate'])
-        self.filename = tempfile.mktemp(prefix='rec_unlimited_', suffix='.wav')
+        self.file = tempfile.NamedTemporaryFile(
+            prefix='rec_unlimited_',
+            suffix='.wav',
+            delete=False
+        )
+        self.filename = self.file.name
         channels = 1
         q = queue.Queue()
 
@@ -51,7 +56,7 @@ class AudioRecorder:
                 q.put(indata.copy())
 
         # Make sure the file is opened before recording anything:
-        with sf.SoundFile(self.filename, mode='x', samplerate=samplerate, channels=channels) as file:
+        with sf.SoundFile(self.file, mode='x', samplerate=samplerate, channels=channels) as file:
             with sd.InputStream(samplerate=samplerate, device=self.device['name'], channels=channels, callback=callback):
                 print('#' * 80)
                 print('press Ctrl+C to stop the recording')
@@ -59,8 +64,7 @@ class AudioRecorder:
                 while self.__recording:
                     file.write(q.get())
                 print('\nRecording finished: ' + repr(self.filename))
-                remove_silence(self.filename)
-                os.remove(self.filename)
+        self.file.close()
 
     def start(self):
         self.flush_last()
