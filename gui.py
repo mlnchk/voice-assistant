@@ -490,11 +490,9 @@ class MainFrame (wx.Frame):
                            wildcard = glo.GetText('save_dialog_wildcard', lang) + ' (*.wav)|*.wav',
                            defaultFile = sessionName + '.wav',
                            style = wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT
-            ) as fileDialog:
-
+        ) as fileDialog:
             if fileDialog.ShowModal() == wx.ID_CANCEL:
-                return
-            
+                return False
             try:
                 copy(self.recorder.get_filename(), fileDialog.GetPath())
                 return True
