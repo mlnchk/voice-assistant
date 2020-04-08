@@ -2,7 +2,6 @@ import wx
 import os.path
 import re
 import subprocess, os, platform
-import wave
 from shutil import copy
 import numpy as np
 
@@ -13,7 +12,7 @@ from matplotlib.figure import Figure
 
 import globals as glo
 import AudioRecorder as arec
-from silence import remove_silence
+import silence
 
 class AppCore(wx.App):
 
@@ -732,8 +731,6 @@ class MainFrame (wx.Frame):
 
     class VolumeCutterDialog(wx.Dialog):
 
-        filename = None
-
         class CanvasPanel(wx.Panel):
 
             def __init__(self, parent):
@@ -790,6 +787,7 @@ class MainFrame (wx.Frame):
                 self.__refresh_background()
 
         def __init__(self, parent):
+            self.ap = silence.AudioProcessor()
             super().__init__(parent = parent,
                              style = wx.CAPTION)
             self.__InitUI()
@@ -844,10 +842,8 @@ class MainFrame (wx.Frame):
                     element.SetLabel(text + varstr)
             
             if filename is not None:
-                self.filename = filename
-                file = wave.open(filename)
-                data = np.fromstring(file.readframes(-1), "Int16")
-                self.soundData = abs(data)
+                self.ap.Open(filename)
+                self.soundData = self.ap.GetData()
                 
                 self.canvasPanel.set_graph_content(self.soundData)
                 self.canvasPanel.set_level_content(self.scaleFunc(self.slider.GetValue()))
@@ -879,12 +875,13 @@ class MainFrame (wx.Frame):
             sizer.Fit(self)
 
         def __CutBtnClick(self, event):
-            if self.filename is not None:
-                vl = self.scaleFunc(self.slider.GetValue(), True)
-                remove_silence(self.filename, vl)
-                self.filename = None
+            # if self.filename is not None:
+            #     vl = self.scaleFunc(self.slider.GetValue(), True)
+            #     remove_silence(self.filename, vl)
+            #     self.filename = None
+            self.ap.Close()
             self.EndModal(wx.ID_OK)
 
         def __DontBtnClick(self, event):
-            self.filename = None
+            self.ap.Close()
             self.EndModal(wx.ID_OK)

@@ -1,8 +1,25 @@
 from pydub import AudioSegment
 from pydub.silence import split_on_silence
 
+import numpy as np
+
 MIN_SILENCE_LEN = 2000 # At least 2000 ms long.
 SILENCE_THRESH = -80 # Consider a chunk silent if it's quieter than -50 dBFS.
+
+class AudioProcessor():
+
+    aseg = None
+
+    def Open(self, filename):
+        self.aseg = AudioSegment.from_file(filename, format="wav")
+    
+    def Close(self):
+        self.aseg = None
+
+    def GetData(self):
+        if self.aseg is None:
+            return None
+        return abs(np.fromstring(self.aseg.raw_data, 'Int16'))
 
 # Normalize a chunk to a target amplitude.
 def match_target_amplitude(aChunk, target_dBFS):
@@ -12,7 +29,7 @@ def match_target_amplitude(aChunk, target_dBFS):
 
 def remove_silence(filename, volume_level):
     aseg = AudioSegment.from_file(filename, format="wav")
-    print(aseg.max_dBFS, volume_level)
+    print(aseg.max_dBFS, aseg.max, volume_level)
     # Split track where the silence is 2 seconds or more and get chunks
     chunks = split_on_silence(aseg, min_silence_len = MIN_SILENCE_LEN, silence_thresh = SILENCE_THRESH)
     result = AudioSegment.empty()
