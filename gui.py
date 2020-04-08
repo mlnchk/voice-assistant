@@ -751,6 +751,7 @@ class MainFrame (wx.Frame):
                     autoscale_on = True
                 )
                 self.ax.set_axis_off()
+                self.ax.set_yscale('log', nonposy='clip', basey=10.0)
 
                 self.figure.set_tight_layout({'pad' : 0})
                 
@@ -799,8 +800,8 @@ class MainFrame (wx.Frame):
             panel = self.panel = wx.Panel(self)
 
             self.canvasPanel = self.CanvasPanel(panel)
-            self.MAX_LEVEL = 128
-            self.slider = wx.Slider(panel, style = wx.SL_VERTICAL | wx.SL_INVERSE, minValue = 0, maxValue = self.MAX_LEVEL)
+            self.MAX_VAL = 512
+            self.slider = wx.Slider(panel, style = wx.SL_VERTICAL | wx.SL_INVERSE, minValue = 0, maxValue = self.MAX_VAL)
 
             element = MainFrame.element
             elements = element(
@@ -846,13 +847,10 @@ class MainFrame (wx.Frame):
                 self.filename = filename
                 file = wave.open(filename)
                 data = np.fromstring(file.readframes(-1), "Int16")
-                self.soundData = np.log10([abs(x) + 1 for x in data])
-
-                self.soundDataMax = max(self.soundData)
-                self.soundData = self.soundData / self.soundDataMax
+                self.soundData = abs(data)
                 
                 self.canvasPanel.set_graph_content(self.soundData)
-                self.canvasPanel.set_level_content(self.slider.GetValue())
+                self.canvasPanel.set_level_content(self.scaleFunc(self.slider.GetValue()))
 
         def __Bind(self):
             self.Bind(wx.EVT_PAINT, self.__OnRepaint)
@@ -865,8 +863,15 @@ class MainFrame (wx.Frame):
             self.Refresh()
             self.Update()
 
+        def scaleFunc(self, x, linear = False):
+            x = x / self.MAX_VAL
+            ymin, ymax = self.canvasPanel.ax.get_ylim()
+            if linear:
+                return x
+            return ymax ** x
+
         def __SliderChanged(self, event):
-            self.canvasPanel.set_level_content(event.GetInt()/self.MAX_LEVEL)
+            self.canvasPanel.set_level_content(self.scaleFunc(event.GetInt()))
 
         def __OnRepaint(self, event):
             sizer = self.panel.GetSizer()
@@ -875,8 +880,11 @@ class MainFrame (wx.Frame):
 
         def __CutBtnClick(self, event):
             if self.filename is not None:
-                remove_silence(self.filename)
+                vl = self.scaleFunc(self.slider.GetValue(), True)
+                remove_silence(self.filename, vl)
+                self.filename = None
             self.EndModal(wx.ID_OK)
 
         def __DontBtnClick(self, event):
+            self.filename = None
             self.EndModal(wx.ID_OK)

@@ -10,11 +10,11 @@ def match_target_amplitude(aChunk, target_dBFS):
     change_in_dBFS = target_dBFS - aChunk.dBFS
     return aChunk.apply_gain(change_in_dBFS)
 
-def remove_silence(filename):
-    song = AudioSegment.from_file(filename, format="wav")
-
+def remove_silence(filename, volume_level):
+    aseg = AudioSegment.from_file(filename, format="wav")
+    print(aseg.max_dBFS, volume_level)
     # Split track where the silence is 2 seconds or more and get chunks
-    chunks = split_on_silence(song, min_silence_len = MIN_SILENCE_LEN, silence_thresh = SILENCE_THRESH)
+    chunks = split_on_silence(aseg, min_silence_len = MIN_SILENCE_LEN, silence_thresh = SILENCE_THRESH)
     result = AudioSegment.empty()
 
     # Create a silence chunk that's 0.5 seconds (or 500 ms) long for padding.
@@ -26,4 +26,4 @@ def remove_silence(filename):
         # Normalize the entire chunk.
         # normalized_chunk = match_target_amplitude(audio_chunk, -20.0)
         result += audio_chunk
-    result.export("no_silence_" + filename.split('/')[-1], format="wav")
+    # result.export("no_silence_" + filename.split('/')[-1], format="wav")
