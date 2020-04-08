@@ -155,8 +155,8 @@
             "ru":"Закрыть"
         },
         "vcutter_frame_title" : {
-            "en":"Cut by volume",
-            "ru":"Обрезка по громкости"
+            "en":"Cutter",
+            "ru":"Обрезка"
         },
         "vcutter_dialog_cut_button" : {
             "en":"Cut",
@@ -165,6 +165,10 @@
         "vcutter_dialog_done_button" : {
             "en":"Done",
             "ru":"Готово"
+        },
+        "vcutter_dialog_silence_length_label" : {
+            "en":"Silence length (ms):",
+            "ru":"Отрезки тишины (мс):"
         }
     }
 }

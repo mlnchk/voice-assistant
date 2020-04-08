@@ -60,12 +60,11 @@ class AudioProcessor():
         return regions, [[y, y] for i in range(len(regions))]
 
 
-    def RemoveSilence(self, volume_level):
+    def RemoveSilence(self, volume_level, silence_duration):
         silence_thresh = utils.ratio_to_db(volume_level)
 
         chunk_size = 50
-        silence_dur = 1000
-        silence_chunks = silence_dur // chunk_size
+        silence_chunks = silence_duration // chunk_size
         chunks = self.__get_chunks(chunk_size)
 
         result = AudioSegment.empty()

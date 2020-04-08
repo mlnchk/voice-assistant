@@ -77,9 +77,9 @@ class MainFrame (wx.Frame):
         self.UpdateContent()
         self.__SetState(self.STATE_RESET)
 
-        # self.vcutterDialog.UpdateContent('Unnamed.wav')
-        # self.__InvokeVcutterWindow(None)
-        # self.Close()
+        self.vcutterDialog.UpdateContent('Unnamed.wav')
+        self.__InvokeVcutterWindow(None)
+        self.Close()
 
     def __InitStateFields(self):
         self.STATE_RESET = self.autoID.GetID()
@@ -831,7 +831,10 @@ class MainFrame (wx.Frame):
 
             self.canvasPanel = self.CanvasPanel(panel)
             self.MAX_VAL = 512
-            self.slider = wx.Slider(panel, style = wx.SL_VERTICAL | wx.SL_INVERSE, minValue = 0, maxValue = self.MAX_VAL)
+            self.volumeSlider = wx.Slider(panel, style = wx.SL_VERTICAL | wx.SL_INVERSE, minValue = 0, maxValue = self.MAX_VAL)
+            self.lCutSlider = wx.Slider(panel, style = wx.SL_HORIZONTAL, minValue = 0, maxValue = self.MAX_VAL)
+            self.rCutSlider = wx.Slider(panel, style = wx.SL_HORIZONTAL | wx.SL_INVERSE, minValue = 0, maxValue = self.MAX_VAL)
+            self.silenceLengthCtrl = wx.TextCtrl(panel, style = wx.TE_PROCESS_ENTER)
 
             element = MainFrame.element
             elements = element(
@@ -839,19 +842,55 @@ class MainFrame (wx.Frame):
                 { 'flag' : wx.ALL | wx.EXPAND, 'border' : 3 },
                 [
                     element(
-                        wx.BoxSizer(wx.HORIZONTAL),
+                        wx.FlexGridSizer(2, 2, 0),
                         { 'flag' : wx.ALL | wx.EXPAND, 'border' : 3 },
                         [
-                            element(self.slider),
-                            element(self.canvasPanel)
+                            element(
+                                self.volumeSlider,
+                                { 'flag' : wx.ALL ^ wx.RIGHT | wx.EXPAND, 'border' : 6 }
+                            ),
+                            element(
+                                self.canvasPanel,
+                                { 'flag' : wx.ALL | wx.EXPAND, 'border' : 9 }
+                            ),
+                            element(wx.StaticText(panel, label = '')),
+                            element(
+                                wx.BoxSizer(wx.VERTICAL),
+                                { 'flag' : wx.LEFT | wx.RIGHT | wx.EXPAND, 'border' : 3 },
+                                [
+                                    element(self.lCutSlider),
+                                    element(self.rCutSlider)
+                                ]
+                            )
                         ]
                     ),
                     element(
+                        wx.StaticLine(panel),
+                        { 'flag' : wx.LEFT | wx.RIGHT | wx.EXPAND, 'border' : 6 }
+                    ),
+                    element(
                         wx.BoxSizer(wx.HORIZONTAL),
-                        { 'proportion' : 1, 'flag' : wx.ALL ^ wx.TOP | wx.EXPAND, 'border' : 3 },
+                        { 'flag' : wx.ALL | wx.EXPAND },
                         [
-                            element(wx.Button(panel, name = 'vcutter_dialog_cut_button')),
-                            element(wx.Button(panel, name = 'vcutter_dialog_done_button'))
+                            element(
+                                wx.BoxSizer(wx.HORIZONTAL),
+                                { 'proportion' : 1, 'flag' : wx.ALL | wx.EXPAND, 'border' : 3 },
+                                [
+                                    element(wx.Button(panel, name = 'vcutter_dialog_cut_button')),
+                                    element(wx.Button(panel, name = 'vcutter_dialog_done_button'))
+                                ]
+                            ),
+                            element(
+                                wx.BoxSizer(wx.HORIZONTAL),
+                                { 'flag' : wx.ALL | wx.EXPAND, 'border' : 3 },
+                                [
+                                    element(
+                                        wx.StaticText(panel, name = 'vcutter_dialog_silence_length_label'),
+                                        { 'flag' : wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_RIGHT | wx.ALL, 'border' : 3 }
+                                    ),
+                                    element(self.silenceLengthCtrl)
+                                ]
+                            ),
                         ]
                     )
                 ]
@@ -879,11 +918,14 @@ class MainFrame (wx.Frame):
                 
                 steps_data = self.ap.GetSteps(50)
                 self.canvasPanel.set_graph_content(steps_data = steps_data)
-                self.canvasPanel.set_level_content(self.scaleFunc(self.slider.GetValue()))
+                self.canvasPanel.set_level_content(self.scaleFunc(self.volumeSlider.GetValue()))
 
         def __Bind(self):
             self.Bind(wx.EVT_PAINT, self.__OnRepaint)
-            self.slider.Bind(wx.EVT_SLIDER, self.__SliderChanged)
+            self.volumeSlider.Bind(wx.EVT_SLIDER, self.__VolumeSliderChanged)
+            self.lCutSlider.Bind(wx.EVT_SLIDER, self.__LCutSliderChanged)
+            self.rCutSlider.Bind(wx.EVT_SLIDER, self.__RCutSliderChanged)
+            self.silenceLengthCtrl.Bind(wx.EVT_CHAR, self.__SilenceLengthOnChar)
             self.panel.FindWindow('vcutter_dialog_cut_button').Bind(wx.EVT_BUTTON, self.__CutBtnClick)
             self.panel.FindWindow('vcutter_dialog_done_button').Bind(wx.EVT_BUTTON, self.__DoneBtnClick)
 
@@ -900,8 +942,35 @@ class MainFrame (wx.Frame):
                 result /= ymax
             return result
 
-        def __SliderChanged(self, event):
+        def __VolumeSliderChanged(self, event):
             self.canvasPanel.set_level_content(self.scaleFunc(event.GetInt()))
+
+        def __LCutSliderChanged(self, event):
+            if event.GetInt() > self.MAX_VAL - self.rCutSlider.GetValue():
+                self.rCutSlider.SetValue(self.MAX_VAL - event.GetInt())
+
+        def __RCutSliderChanged(self, event):
+            if event.GetInt() > self.MAX_VAL - self.lCutSlider.GetValue():
+                self.lCutSlider.SetValue(self.MAX_VAL - event.GetInt())
+
+        def __SilenceLengthOnChar(self, event):    
+
+            key = event.GetKeyCode()
+
+            print(key)
+   
+            try: character = chr(key)
+            except ValueError: character = "" # arrow keys will throw this error
+
+            acceptable_characters = "1234567890."
+
+            if character in acceptable_characters or key == 13 or key == 314 or key == 316 or key == 8 or key == 127: # 13 = enter, 314 & 316 = arrows, 8 = backspace, 127 = del
+                event.Skip()
+                return
+   
+            else:
+                return False
+
 
         def __OnRepaint(self, event):
             sizer = self.panel.GetSizer()
@@ -909,16 +978,16 @@ class MainFrame (wx.Frame):
             sizer.Fit(self)
 
         def __CutBtnClick(self, event):
-            self.ap.RemoveSilence(self.scaleFunc(self.slider.GetValue(), True))
+            self.ap.RemoveSilence(self.scaleFunc(self.volumeSlider.GetValue(), True), 1000)
 
             self.soundData = self.ap.GetData()
             steps_data = self.ap.GetSteps(50)
             self.canvasPanel.set_graph_content(steps_data = steps_data)
 
-            # xs, ys = self.ap.GetSilentRegions(50, self.scaleFunc(self.slider.GetValue(), True))
+            # xs, ys = self.ap.GetSilentRegions(50, self.scaleFunc(self.volumeSlider.GetValue(), True))
             # self.canvasPanel.mark_regions(xs, ys)
 
         def __DoneBtnClick(self, event):
-            self.ap.Save()
+            # self.ap.Save()
             self.ap.Close()
             self.EndModal(wx.ID_OK)
