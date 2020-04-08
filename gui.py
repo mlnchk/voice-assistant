@@ -764,6 +764,12 @@ class MainFrame (wx.Frame):
                     lw = 0.5
                 )
                 self.graph_line = None
+                self.regions = None
+                self.steps, = self.ax.step(
+                    *defaultData,
+                    c = '#ffff00',
+                    lw = 0.3
+                )
 
                 self.canvas = FigureCanvas(self, -1, self.figure)
             
@@ -779,19 +785,38 @@ class MainFrame (wx.Frame):
                 self.ax.draw_artist(self.level_line)
                 self.canvas.blit(self.ax.bbox)
 
-            def set_graph_content(self, y_data):
+            def set_graph_content(self, accurate_data = None, steps_data = None):
                 if not (self.graph_line is None):
                     self.graph_line.remove()
-                datalen = len(y_data)
-                fact = 1.0 / datalen
-                x_data = [i * fact for i in range(datalen)]
-                self.graph_line, = self.ax.stackplot(
-                    x_data,
-                    y_data,
-                    colors = ['#00ff00'],
-                    lw = 0
-                )
+                if not (accurate_data is None):
+                    datalen = len(accurate_data)
+                    fact = 1.0 / datalen
+                    self.graph_line, = self.ax.stackplot(
+                        [i * fact for i in range(datalen)],
+                        accurate_data,
+                        colors = ['#00ff00'],
+                        lw = 0
+                    )
+                else:
+                    self.ax.set_ylim(1, 32767)
+                if not (steps_data is None):
+                    self.steps.set_data(steps_data)
+                    self.steps.set_visible(True)
+                else:
+                    self.steps.set_visible(False)
                 self.__refresh_background()
+
+            def mark_regions(self, xs, ys):
+                if not (self.regions is None):
+                    for region in self.regions:
+                        region.remove()
+                regions = []
+                self.canvas.restore_region(self.background)
+                for xpair, ypair in zip(xs, ys):
+                    line, = self.ax.plot(xpair, ypair, color = '#0000bb', lw = 0.5)
+                    self.ax.draw_artist(line)
+                    regions.append(line)
+                self.canvas.blit(self.ax.bbox)
 
         def __init__(self, parent):
             self.ap = silence.AudioProcessor()
@@ -852,7 +877,8 @@ class MainFrame (wx.Frame):
                 self.ap.Open(filename)
                 self.soundData = self.ap.GetData()
                 
-                self.canvasPanel.set_graph_content(self.soundData)
+                steps_data = self.ap.GetSteps(50)
+                self.canvasPanel.set_graph_content(steps_data = steps_data)
                 self.canvasPanel.set_level_content(self.scaleFunc(self.slider.GetValue()))
 
         def __Bind(self):
@@ -869,7 +895,7 @@ class MainFrame (wx.Frame):
         def scaleFunc(self, x, normalize = False):
             x = x / self.MAX_VAL
             ymin, ymax = self.canvasPanel.ax.get_ylim()
-            result = ymax ** x
+            result =  ((ymax - ymin) ** x - 1) + ymin
             if normalize:
                 result /= ymax
             return result
@@ -884,9 +910,15 @@ class MainFrame (wx.Frame):
 
         def __CutBtnClick(self, event):
             self.ap.RemoveSilence(self.scaleFunc(self.slider.GetValue(), True))
+
             self.soundData = self.ap.GetData()
-            self.canvasPanel.set_graph_content(self.soundData)
+            steps_data = self.ap.GetSteps(50)
+            self.canvasPanel.set_graph_content(steps_data = steps_data)
+
+            # xs, ys = self.ap.GetSilentRegions(50, self.scaleFunc(self.slider.GetValue(), True))
+            # self.canvasPanel.mark_regions(xs, ys)
 
         def __DoneBtnClick(self, event):
+            self.ap.Save()
             self.ap.Close()
             self.EndModal(wx.ID_OK)
