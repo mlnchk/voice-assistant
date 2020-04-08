@@ -162,9 +162,9 @@
             "en":"Cut",
             "ru":"Обрезать"
         },
-        "vcutter_dialog_dont_button" : {
-            "en":"Don't cut",
-            "ru":"Не обрезать"
+        "vcutter_dialog_done_button" : {
+            "en":"Done",
+            "ru":"Готово"
         }
     }
 }

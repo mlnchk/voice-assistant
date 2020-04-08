@@ -77,6 +77,10 @@ class MainFrame (wx.Frame):
         self.UpdateContent()
         self.__SetState(self.STATE_RESET)
 
+        # self.vcutterDialog.UpdateContent('Unnamed.wav')
+        # self.__InvokeVcutterWindow(None)
+        # self.Close()
+
     def __InitStateFields(self):
         self.STATE_RESET = self.autoID.GetID()
         self.STATE_RECORD = self.autoID.GetID()
@@ -759,6 +763,7 @@ class MainFrame (wx.Frame):
                     c = '#ff0000',
                     lw = 0.5
                 )
+                self.graph_line = None
 
                 self.canvas = FigureCanvas(self, -1, self.figure)
             
@@ -775,10 +780,12 @@ class MainFrame (wx.Frame):
                 self.canvas.blit(self.ax.bbox)
 
             def set_graph_content(self, y_data):
+                if not (self.graph_line is None):
+                    self.graph_line.remove()
                 datalen = len(y_data)
                 fact = 1.0 / datalen
                 x_data = [i * fact for i in range(datalen)]
-                self.graph_line = self.ax.stackplot(
+                self.graph_line, = self.ax.stackplot(
                     x_data,
                     y_data,
                     colors = ['#00ff00'],
@@ -819,7 +826,7 @@ class MainFrame (wx.Frame):
                         { 'proportion' : 1, 'flag' : wx.ALL ^ wx.TOP | wx.EXPAND, 'border' : 3 },
                         [
                             element(wx.Button(panel, name = 'vcutter_dialog_cut_button')),
-                            element(wx.Button(panel, name = 'vcutter_dialog_dont_button'))
+                            element(wx.Button(panel, name = 'vcutter_dialog_done_button'))
                         ]
                     )
                 ]
@@ -852,19 +859,20 @@ class MainFrame (wx.Frame):
             self.Bind(wx.EVT_PAINT, self.__OnRepaint)
             self.slider.Bind(wx.EVT_SLIDER, self.__SliderChanged)
             self.panel.FindWindow('vcutter_dialog_cut_button').Bind(wx.EVT_BUTTON, self.__CutBtnClick)
-            self.panel.FindWindow('vcutter_dialog_dont_button').Bind(wx.EVT_BUTTON, self.__DontBtnClick)
+            self.panel.FindWindow('vcutter_dialog_done_button').Bind(wx.EVT_BUTTON, self.__DoneBtnClick)
 
         def UpdateContent(self, filename = None):
             self.__SetContent(filename)
             self.Refresh()
             self.Update()
 
-        def scaleFunc(self, x, linear = False):
+        def scaleFunc(self, x, normalize = False):
             x = x / self.MAX_VAL
             ymin, ymax = self.canvasPanel.ax.get_ylim()
-            if linear:
-                return x
-            return ymax ** x
+            result = ymax ** x
+            if normalize:
+                result /= ymax
+            return result
 
         def __SliderChanged(self, event):
             self.canvasPanel.set_level_content(self.scaleFunc(event.GetInt()))
@@ -875,13 +883,10 @@ class MainFrame (wx.Frame):
             sizer.Fit(self)
 
         def __CutBtnClick(self, event):
-            # if self.filename is not None:
-            #     vl = self.scaleFunc(self.slider.GetValue(), True)
-            #     remove_silence(self.filename, vl)
-            #     self.filename = None
-            self.ap.Close()
-            self.EndModal(wx.ID_OK)
+            self.ap.RemoveSilence(self.scaleFunc(self.slider.GetValue(), True))
+            self.soundData = self.ap.GetData()
+            self.canvasPanel.set_graph_content(self.soundData)
 
-        def __DontBtnClick(self, event):
+        def __DoneBtnClick(self, event):
             self.ap.Close()
             self.EndModal(wx.ID_OK)

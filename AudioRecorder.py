@@ -6,8 +6,6 @@ import queue
 import sys
 import os
 
-from silence import remove_silence
-
 class AudioRecorder:
     devices = sd.query_devices()
     device = sd.query_devices(kind = 'input')
