@@ -187,6 +187,7 @@ class MainFrame (wx.Frame):
     def __InitUI (self):
         self.panel = wx.Panel(self)
         self.__SetLayout()
+        self.SetMinSize(wx.Size(512, 256))
         self.__Bind()
 
     def __SetLayout (self):
