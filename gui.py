@@ -354,8 +354,8 @@ class MainFrame (wx.Frame):
                 element.SetLabel(text)
 
     def __SetDevicesList(self, element):
-        self.devices = self.recorder.get_devices()
-        devices = [x['name'] for x in self.devices if x['max_input_channels'] > 0]
+        self.devices = [x for x in self.recorder.get_devices() if x['max_input_channels'] > 0]
+        devices = [x['name'] for x in self.devices]
         element.SetItems(devices)
         default = self.recorder.get_device()
         n = element.FindString(default['name'], True)
