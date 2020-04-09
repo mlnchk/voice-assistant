@@ -113,6 +113,14 @@
             "en":"Please confirm",
             "ru":"Подтверждение"
         },
+        "save_dialog_title": {
+            "en":"Save As...",
+            "ru":"Сохранить как..."
+        },
+        "save_dialog_wildcard": {
+            "en":"WAVE audiofile",
+            "ru":"Аудиофайл WAVE"
+        },
         "save_dialog_error_text": {
             "en":"File couldn't be saved!",
             "ru":"Файл не может быть сохранен!"
