@@ -8,7 +8,7 @@ import os
 
 class AudioRecorder:
     devices = sd.query_devices()
-    device = sd.query_devices(kind = 'input')
+    device_id = None
 
     def __init__(self, statusCallback):
         self.filename = None
@@ -21,7 +21,7 @@ class AudioRecorder:
             return
         os.remove(self.filename)
         self.filename = None
-    
+
     def if_fileClosed(self):
         return self.fileClosed
 
@@ -32,13 +32,15 @@ class AudioRecorder:
         return self.devices
 
     def get_device(self):
-        return self.device
+        if self.device_id is None:
+            return sd.query_devices(kind = 'input')
+        return self.devices[self.device_id]
 
-    def set_device(self, device):
-        self.device = device
+    def set_device_id(self, device):
+        self.device_id = device
 
     def record(self):
-        device_info = sd.query_devices(self.device['name'], 'input')
+        device_info = sd.query_devices(self.device_id, 'input')
         samplerate = int(device_info['default_samplerate'])
         self.file = tempfile.NamedTemporaryFile(
             prefix='rec_unlimited_',
@@ -60,7 +62,7 @@ class AudioRecorder:
 
         # Make sure the file is opened before recording anything:
         with sf.SoundFile(self.file, mode='x', samplerate=samplerate, channels=channels) as file:
-            with sd.InputStream(samplerate=samplerate, device=self.device['name'], channels=channels, callback=callback):
+            with sd.InputStream(samplerate=samplerate, device=self.device_id, channels=channels, callback=callback):
                 print('#' * 80)
                 print('press Ctrl+C to stop the recording')
                 print('#' * 80)

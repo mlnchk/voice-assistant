@@ -399,8 +399,8 @@ class MainFrame (wx.Frame):
         panel.FindWindow('stop_button').Bind(wx.EVT_BUTTON, self.__StopBtn)
 
     def __SetDevice(self, event):
-        self.device = event.GetInt()
-        self.recorder.set_device(self.devices[self.device])
+        self.device_id = event.GetInt()
+        self.recorder.set_device_id(self.device_id)
 
     def __RecordBtn(self, event):
         if self.__SaveQuestion():
