@@ -63,12 +63,8 @@ class AudioRecorder:
         # Make sure the file is opened before recording anything:
         with sf.SoundFile(self.file, mode='x', samplerate=samplerate, channels=channels) as file:
             with sd.InputStream(samplerate=samplerate, device=self.device_id, channels=channels, callback=callback):
-                print('#' * 80)
-                print('press Ctrl+C to stop the recording')
-                print('#' * 80)
                 while self.__recording:
                     file.write(q.get())
-                print('\nRecording finished: ' + repr(self.filename))
         self.file.close()
         self.fileClosed = True
 
