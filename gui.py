@@ -363,7 +363,7 @@ class MainFrame (wx.Frame):
                 element.SetLabel(text)
 
     def __SetDevicesList(self, element):
-        self.devices = [x for x in self.recorder.get_devices() if x['max_input_channels'] > 0]
+        self.devices = [x for x in self.recorder.get_devices() if x['max_input_channels'] > 0 and x['hostapi'] == 0]
         devices = [x['name'] for x in self.devices]
         element.SetItems(devices)
         default = self.recorder.get_device()
@@ -499,7 +499,7 @@ class MainFrame (wx.Frame):
         if sessionName == '':
             sessionName = glo.GetText('default_session_name', lang)
         with wx.FileDialog(self,
-                           glo.GetText('save_dialog_title', lang), 
+                           glo.GetText('save_dialog_title', lang),
                            wildcard = glo.GetText('save_dialog_wildcard', lang) + ' (*.wav)|*.wav',
                            defaultFile = sessionName + '.wav',
                            style = wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT
@@ -761,7 +761,7 @@ class MainFrame (wx.Frame):
                 self.ax.set_axis_off()
                 self.ax.set_yscale('log', nonposy='clip', basey=10.0)
                 self.figure.set_tight_layout({'pad' : 0})
-                
+
                 defaultData = ([0, 1], [0, 1])
                 self.ctrl_lines = [
                     self.ax.plot(
@@ -798,7 +798,7 @@ class MainFrame (wx.Frame):
                     self.ctrl_lines[1].set_data([l, l], [ymin, ymax])
                 if not (r is None):
                     self.ctrl_lines[2].set_data([r, r], [ymin, ymax])
-                    
+
                 self.__restore_if_possible()
                 self.__draw_lines()
                 self.canvas.blit(self.ax.bbox)
@@ -951,14 +951,14 @@ class MainFrame (wx.Frame):
                     varstr = glo.Get(variable)
                 if text != 'n/a':
                     element.SetLabel(text + varstr)
-            
+
             self.qualityRadioBox.SetItemLabel(0, glo.GetText('vcutter_dialog_quality_box_0', lang))
             self.qualityRadioBox.SetItemLabel(1, glo.GetText('vcutter_dialog_quality_box_1', lang))
 
             if filename is not None:
                 self.ap.Open(filename)
                 self.regions = None
-                
+
                 self.__SetQuality()
 
                 self.canvasPanel.set_lines_content(
