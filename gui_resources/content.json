@@ -162,13 +162,17 @@
             "en":"Cut",
             "ru":"Обрезать"
         },
-        "vcutter_dialog_done_button" : {
-            "en":"Done",
-            "ru":"Готово"
+        "vcutter_dialog_save_button" : {
+            "en":"Save",
+            "ru":"Сохранить"
+        },
+        "vcutter_dialog_cancel_button" : {
+            "en":"Cancel",
+            "ru":"Отмена"
         },
         "vcutter_dialog_silence_length_label" : {
-            "en":"Silence length (ms):",
-            "ru":"Отрезки тишины (мс):"
+            "en":"Silence length (s):",
+            "ru":"Отрезки тишины (с):"
         }
     }
 }

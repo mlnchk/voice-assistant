@@ -12,7 +12,7 @@ from matplotlib.figure import Figure
 
 import globals as glo
 import AudioRecorder as arec
-import silence
+import AudioProcessor
 
 class AppCore(wx.App):
 
@@ -77,9 +77,9 @@ class MainFrame (wx.Frame):
         self.UpdateContent()
         self.__SetState(self.STATE_RESET)
 
-        self.vcutterDialog.UpdateContent('Unnamed.wav')
-        self.__InvokeVcutterWindow(None)
-        self.Close()
+        # self.vcutterDialog.UpdateContent('Unnamed.wav')
+        # self.__InvokeVcutterWindow(None)
+        # self.Close()
 
     def __InitStateFields(self):
         self.STATE_RESET = self.autoID.GetID()
@@ -763,6 +763,16 @@ class MainFrame (wx.Frame):
                     c = '#ff0000',
                     lw = 0.5
                 )
+                self.lcut_line, = self.ax.plot(
+                    *defaultData,
+                    c = '#ffffff',
+                    lw = 0.5
+                )
+                self.rcut_line, = self.ax.plot(
+                    *defaultData,
+                    c = '#ffffff',
+                    lw = 0.5
+                )
                 self.graph_line = None
                 self.regions = None
                 self.steps, = self.ax.step(
@@ -775,14 +785,28 @@ class MainFrame (wx.Frame):
             
             def __refresh_background(self):
                 self.level_line.set_visible(False)
+                self.lcut_line.set_visible(False)
+                self.rcut_line.set_visible(False)
                 self.canvas.draw()
                 self.background = self.canvas.copy_from_bbox(self.ax.bbox)
                 self.level_line.set_visible(True)
+                self.lcut_line.set_visible(True)
+                self.rcut_line.set_visible(True)
 
-            def set_level_content(self, h):
-                self.level_line.set_ydata([h, h])
+            def set_lines_content(self, h = None, l = None, r = None):
+                if not (h is None):
+                    self.level_line.set_ydata([h, h])
+                if not (l is None and r is None):
+                    ymin, ymax = self.ax.get_ylim()
+                if not (l is None):
+                    self.lcut_line.set_data([l, l], [ymin, ymax])
+                if not (r is None):
+                    self.rcut_line.set_data([r, r], [ymin, ymax])
+
                 self.canvas.restore_region(self.background)
                 self.ax.draw_artist(self.level_line)
+                self.ax.draw_artist(self.lcut_line)
+                self.ax.draw_artist(self.rcut_line)
                 self.canvas.blit(self.ax.bbox)
 
             def set_graph_content(self, accurate_data = None, steps_data = None):
@@ -819,7 +843,7 @@ class MainFrame (wx.Frame):
                 self.canvas.blit(self.ax.bbox)
 
         def __init__(self, parent):
-            self.ap = silence.AudioProcessor()
+            self.ap = AudioProcessor.AudioProcessor()
             super().__init__(parent = parent,
                              style = wx.CAPTION)
             self.__InitUI()
@@ -834,7 +858,7 @@ class MainFrame (wx.Frame):
             self.volumeSlider = wx.Slider(panel, style = wx.SL_VERTICAL | wx.SL_INVERSE, minValue = 0, maxValue = self.MAX_VAL)
             self.lCutSlider = wx.Slider(panel, style = wx.SL_HORIZONTAL, minValue = 0, maxValue = self.MAX_VAL)
             self.rCutSlider = wx.Slider(panel, style = wx.SL_HORIZONTAL | wx.SL_INVERSE, minValue = 0, maxValue = self.MAX_VAL)
-            self.silenceLengthCtrl = wx.TextCtrl(panel, style = wx.TE_PROCESS_ENTER)
+            self.silenceLengthCtrl = wx.SpinCtrl(panel, min = 0, max = 10)
 
             element = MainFrame.element
             elements = element(
@@ -869,20 +893,12 @@ class MainFrame (wx.Frame):
                         { 'flag' : wx.LEFT | wx.RIGHT | wx.EXPAND, 'border' : 6 }
                     ),
                     element(
-                        wx.BoxSizer(wx.HORIZONTAL),
-                        { 'flag' : wx.ALL | wx.EXPAND },
+                        wx.BoxSizer(wx.VERTICAL),
+                        { 'flag' : wx.ALL | wx.EXPAND | wx.CENTER },
                         [
                             element(
                                 wx.BoxSizer(wx.HORIZONTAL),
-                                { 'proportion' : 1, 'flag' : wx.ALL | wx.EXPAND, 'border' : 3 },
-                                [
-                                    element(wx.Button(panel, name = 'vcutter_dialog_cut_button')),
-                                    element(wx.Button(panel, name = 'vcutter_dialog_done_button'))
-                                ]
-                            ),
-                            element(
-                                wx.BoxSizer(wx.HORIZONTAL),
-                                { 'flag' : wx.ALL | wx.EXPAND, 'border' : 3 },
+                                { 'flag' : wx.ALL ^ wx.BOTTOM | wx.CENTER, 'border' : 3 },
                                 [
                                     element(
                                         wx.StaticText(panel, name = 'vcutter_dialog_silence_length_label'),
@@ -891,6 +907,15 @@ class MainFrame (wx.Frame):
                                     element(self.silenceLengthCtrl)
                                 ]
                             ),
+                            element(
+                                wx.BoxSizer(wx.HORIZONTAL),
+                                { 'proportion' : 1, 'flag' : wx.ALL | wx.EXPAND, 'border' : 3 },
+                                [
+                                    element(wx.Button(panel, name = 'vcutter_dialog_cut_button')),
+                                    element(wx.Button(panel, name = 'vcutter_dialog_save_button')),
+                                    element(wx.Button(panel, name = 'vcutter_dialog_cancel_button'))
+                                ]
+                            )
                         ]
                     )
                 ]
@@ -918,16 +943,20 @@ class MainFrame (wx.Frame):
                 
                 steps_data = self.ap.GetSteps(50)
                 self.canvasPanel.set_graph_content(steps_data = steps_data)
-                self.canvasPanel.set_level_content(self.scaleFunc(self.volumeSlider.GetValue()))
+
+                self.canvasPanel.set_lines_content(
+                    self.scaleFunc(self.volumeSlider.GetValue()),
+                    self.lCutSlider.GetValue() / self.MAX_VAL,
+                    1.0 - self.rCutSlider.GetValue() / self.MAX_VAL
+                )
 
         def __Bind(self):
             self.Bind(wx.EVT_PAINT, self.__OnRepaint)
             self.volumeSlider.Bind(wx.EVT_SLIDER, self.__VolumeSliderChanged)
             self.lCutSlider.Bind(wx.EVT_SLIDER, self.__LCutSliderChanged)
             self.rCutSlider.Bind(wx.EVT_SLIDER, self.__RCutSliderChanged)
-            self.silenceLengthCtrl.Bind(wx.EVT_CHAR, self.__SilenceLengthOnChar)
             self.panel.FindWindow('vcutter_dialog_cut_button').Bind(wx.EVT_BUTTON, self.__CutBtnClick)
-            self.panel.FindWindow('vcutter_dialog_done_button').Bind(wx.EVT_BUTTON, self.__DoneBtnClick)
+            self.panel.FindWindow('vcutter_dialog_cancel_button').Bind(wx.EVT_BUTTON, self.__DoneBtnClick)
 
         def UpdateContent(self, filename = None):
             self.__SetContent(filename)
@@ -943,34 +972,27 @@ class MainFrame (wx.Frame):
             return result
 
         def __VolumeSliderChanged(self, event):
-            self.canvasPanel.set_level_content(self.scaleFunc(event.GetInt()))
+            self.canvasPanel.set_lines_content(h = self.scaleFunc(event.GetInt()))
 
         def __LCutSliderChanged(self, event):
             if event.GetInt() > self.MAX_VAL - self.rCutSlider.GetValue():
                 self.rCutSlider.SetValue(self.MAX_VAL - event.GetInt())
+                self.canvasPanel.set_lines_content(
+                    l = self.lCutSlider.GetValue() / self.MAX_VAL,
+                    r = 1.0 - self.rCutSlider.GetValue() / self.MAX_VAL
+                )
+            else:
+                self.canvasPanel.set_lines_content(l = self.lCutSlider.GetValue() / self.MAX_VAL)
 
         def __RCutSliderChanged(self, event):
             if event.GetInt() > self.MAX_VAL - self.lCutSlider.GetValue():
                 self.lCutSlider.SetValue(self.MAX_VAL - event.GetInt())
-
-        def __SilenceLengthOnChar(self, event):    
-
-            key = event.GetKeyCode()
-
-            print(key)
-   
-            try: character = chr(key)
-            except ValueError: character = "" # arrow keys will throw this error
-
-            acceptable_characters = "1234567890."
-
-            if character in acceptable_characters or key == 13 or key == 314 or key == 316 or key == 8 or key == 127: # 13 = enter, 314 & 316 = arrows, 8 = backspace, 127 = del
-                event.Skip()
-                return
-   
+                self.canvasPanel.set_lines_content(
+                    l = self.lCutSlider.GetValue() / self.MAX_VAL,
+                    r = 1.0 - self.rCutSlider.GetValue() / self.MAX_VAL
+                )
             else:
-                return False
-
+                self.canvasPanel.set_lines_content(r = 1.0 - self.rCutSlider.GetValue() / self.MAX_VAL)
 
         def __OnRepaint(self, event):
             sizer = self.panel.GetSizer()
@@ -978,11 +1000,18 @@ class MainFrame (wx.Frame):
             sizer.Fit(self)
 
         def __CutBtnClick(self, event):
-            self.ap.RemoveSilence(self.scaleFunc(self.volumeSlider.GetValue(), True), 1000)
+            # self.ap.RemoveSilence(self.scaleFunc(self.volumeSlider.GetValue(), True), 1000)
 
             self.soundData = self.ap.GetData()
             steps_data = self.ap.GetSteps(50)
             self.canvasPanel.set_graph_content(steps_data = steps_data)
+            xs, ys = self.ap.GetNonsilentRegions(
+                50,
+                self.scaleFunc(self.volumeSlider.GetValue(), True),
+                self.lCutSlider.GetValue() / self.MAX_VAL,
+                1.0 - self.rCutSlider.GetValue() / self.MAX_VAL
+            )
+            self.canvasPanel.mark_regions(xs, ys)
 
             # xs, ys = self.ap.GetSilentRegions(50, self.scaleFunc(self.volumeSlider.GetValue(), True))
             # self.canvasPanel.mark_regions(xs, ys)
