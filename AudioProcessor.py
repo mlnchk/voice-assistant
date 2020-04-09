@@ -6,8 +6,6 @@ from pydub import silence
 import numpy as np
 import math
 
-MIN_SILENCE_LEN = 2000
-
 class AudioProcessor():
 
     aseg = None
@@ -42,7 +40,7 @@ class AudioProcessor():
     def GetSteps(self, chunk_size):
         chunks, _ = self.__get_chunks(chunk_size)
         step = 1.0 / len(chunks)
-        return [[step * i for i in range(len(chunks))], [self.aseg.max * utils.db_to_float(chunk.dBFS) for chunk in chunks]]
+        return [[step * i for i in range(len(chunks))], [chunk.rms for chunk in chunks]]
 
     def __get_regions(self, chunk_size, compFunc, left_cut, right_cut):
         chunks, _ = self.__get_chunks(chunk_size, left_cut, right_cut)
@@ -60,49 +58,43 @@ class AudioProcessor():
                 opened = False
         return regions
 
-    def GetSilentRegions(self, chunk_size, volume_level, left_cut = 0, right_cut = 1):
-        silence_thresh = utils.ratio_to_db(volume_level)
-
+    def GetSilentRegions(self, chunk_size, volume_level, left_cut = 0, right_cut = 1, min_nonsilence_len = 0):
         def compFunc(chunk):
-            return chunk.dBFS < silence_thresh
+            return chunk.dBFS < utils.ratio_to_db(volume_level)
 
         regions = self.__get_regions(chunk_size, compFunc, left_cut, right_cut)
-        y = self.aseg.max * utils.db_to_float(silence_thresh)
+        if min_nonsilence_len > 0:
+            space = min_nonsilence_len / len(self.aseg)
+            return self.__min_space_len(regions, space)
+        return regions
 
-        return regions, [[y, y] for i in range(len(regions))]
-
-    def GetNonsilentRegions(self, chunk_size, volume_level, left_cut = 0, right_cut = 1):
-        silence_thresh = utils.ratio_to_db(volume_level)
-
+    def GetNonsilentRegions(self, chunk_size, volume_level, left_cut = 0, right_cut = 1, min_silence_len = 0):
         def compFunc(chunk):
-            return chunk.dBFS >= silence_thresh
+            return chunk.dBFS >= utils.ratio_to_db(volume_level)
 
         regions = self.__get_regions(chunk_size, compFunc, left_cut, right_cut)
-        y = self.aseg.max * utils.db_to_float(silence_thresh)
+        if min_silence_len > 0:
+            space = min_silence_len / len(self.aseg)
+            return self.__min_space_len(regions, space)
+        return regions
 
-        return regions, [[y, y] for i in range(len(regions))]
-
-    def RemoveSilence(self, volume_level, silence_duration, left_cut, right_cut):
-        silence_thresh = utils.ratio_to_db(volume_level)
-
-        chunk_size = 50
-        silence_chunks = silence_duration // chunk_size
-        chunks, _ = self.__get_chunks(chunk_size, left_cut, right_cut)
-
-        result = AudioSegment.empty()
-        opened = False
-        silence_len = 0
-        for chunk in chunks:
-            if chunk.dBFS >= silence_thresh:
-                if not opened:
-                    opened = True
-                    silence_len = 0
-                result += chunk
+    def __min_space_len(self, regions, length):
+        newregions = [regions[0]]
+        cur_end = regions[0][1]
+        for region in regions[1:]:
+            if region[0] - cur_end > length:
+                newregions[len(newregions) - 1][1] += length / 2
+                newregions.append([region[0] - length / 2, region[1]])
+                cur_end = region[1]
             else:
-                opened = False
-                silence_len += 1
-                if silence_len <= silence_chunks:
-                    result += chunk
+                newregions[len(newregions) - 1][1] = region[1]
+                cur_end = region[1]
+        return newregions
 
-        if len(result.raw_data) > 0:
+    def Cut(self, regions):
+        fact = len(self.aseg)
+        result = AudioSegment.empty()
+        for reg in regions:
+            result += self.aseg[reg[0] * fact : reg[1] * fact]
+        if len(result) > 0:
             self.aseg = result

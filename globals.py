@@ -7,7 +7,8 @@ Content = None
 
 Settings = {
     'lang' : 'en',
-    'pathname_regexp' : (True, r'.*/(.*)_assignsubmission_file_/.*', 1)
+    'pathname_regexp' : (True, r'.*/(.*)_assignsubmission_file_/.*', 1),
+    'rendering_quality' : 0
 }
 
 def CheckExisting(filePath):

@@ -158,17 +158,29 @@
             "en":"Cutter",
             "ru":"Обрезка"
         },
+        "vcutter_dialog_prev_button" : {
+            "en":"Preview",
+            "ru":"Предпросмотр"
+        },
         "vcutter_dialog_cut_button" : {
             "en":"Cut",
             "ru":"Обрезать"
         },
-        "vcutter_dialog_save_button" : {
-            "en":"Save",
-            "ru":"Сохранить"
+        "vcutter_dialog_done_button" : {
+            "en":"Done",
+            "ru":"Готово"
         },
-        "vcutter_dialog_cancel_button" : {
-            "en":"Cancel",
-            "ru":"Отмена"
+        "vcutter_dialog_quality_box" : {
+            "en":"Rendering",
+            "ru":"Отображение"
+        },
+        "vcutter_dialog_quality_box_0" : {
+            "en":"Fast",
+            "ru":"Быстро"
+        },
+        "vcutter_dialog_quality_box_1" : {
+            "en":"Accurate",
+            "ru":"Точно"
         },
         "vcutter_dialog_silence_length_label" : {
             "en":"Silence length (s):",
