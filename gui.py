@@ -106,6 +106,9 @@ class MainFrame (wx.Frame):
             self.fileSaved = False
             self.panel.FindWindow('input_device_choice').Enable()
             self.panel.FindWindow('record_button').Enable()
+            sntc = self.panel.FindWindow('session_name_text_control')
+            sntc.Enable()
+            sntc.SetValue('')
             self.panel.FindWindow('stop_button').Disable()
             self.menuBar.FindItemById(self.MENU_BAR_NEW).Enable(True)
             self.menuBar.FindItemById(self.MENU_BAR_OPEN).Enable(True)
@@ -119,8 +122,10 @@ class MainFrame (wx.Frame):
             self.fileOpened = True
             self.fileChanged = True
             self.fileSaved = False
+
             self.panel.FindWindow('input_device_choice').Disable()
             self.panel.FindWindow('record_button').Disable()
+            self.panel.FindWindow('session_name_text_control').Disable()
             self.panel.FindWindow('stop_button').Enable()
             self.menuBar.FindItemById(self.MENU_BAR_NEW).Enable(False)
             self.menuBar.FindItemById(self.MENU_BAR_OPEN).Enable(False)
@@ -133,6 +138,7 @@ class MainFrame (wx.Frame):
             self.state = self.STATE_STOP
             self.panel.FindWindow('input_device_choice').Enable()
             self.panel.FindWindow('record_button').Enable()
+            self.panel.FindWindow('session_name_text_control').Enable()
             self.panel.FindWindow('stop_button').Disable()
             self.menuBar.FindItemById(self.MENU_BAR_NEW).Enable(True)
             self.menuBar.FindItemById(self.MENU_BAR_OPEN).Enable(True)
@@ -145,6 +151,7 @@ class MainFrame (wx.Frame):
             self.state = self.STATE_LOADING
             self.panel.FindWindow('input_device_choice').Disable()
             self.panel.FindWindow('record_button').Disable()
+            self.panel.FindWindow('session_name_text_control').Disable()
             self.panel.FindWindow('stop_button').Disable()
             self.menuBar.FindItemById(self.MENU_BAR_NEW).Enable(False)
             self.menuBar.FindItemById(self.MENU_BAR_OPEN).Enable(False)
@@ -160,6 +167,7 @@ class MainFrame (wx.Frame):
             self.fileSaved = True
             self.panel.FindWindow('input_device_choice').Enable()
             self.panel.FindWindow('record_button').Enable()
+            self.panel.FindWindow('session_name_text_control').Enable()
             self.panel.FindWindow('stop_button').Disable()
             self.menuBar.FindItemById(self.MENU_BAR_NEW).Enable(True)
             self.menuBar.FindItemById(self.MENU_BAR_OPEN).Enable(True)
@@ -408,6 +416,8 @@ class MainFrame (wx.Frame):
             continue
         self.__InvokeVcutterWindow(event)
         self.__SetState(self.STATE_STOP)
+        if self.__SaveDialog():
+            self.__SetState(self.STATE_SAVED)
 
     def __BindMenus(self, panel):
         menuHandlers = {
@@ -1046,7 +1056,6 @@ class MainFrame (wx.Frame):
             self.ap.Cut(self.regions)
             self.__SetQuality()
             self.regions = None
-
 
         def __DoneBtnClick(self, event):
             self.ap.Save()
