@@ -1044,9 +1044,9 @@ class MainFrame (wx.Frame):
             if self.regions is None:
                 self.__CalcRegions()
             self.ap.Cut(self.regions)
-            self.soundData = self.ap.GetData()
-            steps_data = self.ap.GetSteps(50)
             self.__SetQuality()
+            self.regions = None
+
 
         def __DoneBtnClick(self, event):
             self.ap.Save()

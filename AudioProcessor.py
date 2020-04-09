@@ -65,7 +65,7 @@ class AudioProcessor():
         regions = self.__get_regions(chunk_size, compFunc, left_cut, right_cut)
         if min_nonsilence_len > 0:
             space = min_nonsilence_len / len(self.aseg)
-            return self.__min_space_len(regions, space)
+            return self.__min_space_len(regions, left_cut, right_cut, space)
         return regions
 
     def GetNonsilentRegions(self, chunk_size, volume_level, left_cut = 0, right_cut = 1, min_silence_len = 0):
@@ -75,16 +75,29 @@ class AudioProcessor():
         regions = self.__get_regions(chunk_size, compFunc, left_cut, right_cut)
         if min_silence_len > 0:
             space = min_silence_len / len(self.aseg)
-            return self.__min_space_len(regions, space)
+            return self.__min_space_len(regions, left_cut, right_cut, space)
         return regions
 
-    def __min_space_len(self, regions, length):
+    def __min_space_len(self, regions, left, right, length):
+        half_len = length / 2
+
+        if  regions[0][0] - left > half_len:
+            regions[0][0] -= half_len
+        else:
+            regions[0][0] = left
+            
+        if  right - regions[-1][1] > half_len:
+            regions[-1][1] += half_len
+        else:
+            regions[-1][1] = right
+
         newregions = [regions[0]]
         cur_end = regions[0][1]
+
         for region in regions[1:]:
             if region[0] - cur_end > length:
-                newregions[len(newregions) - 1][1] += length / 2
-                newregions.append([region[0] - length / 2, region[1]])
+                newregions[len(newregions) - 1][1] += half_len
+                newregions.append([region[0] - half_len, region[1]])
                 cur_end = region[1]
             else:
                 newregions[len(newregions) - 1][1] = region[1]
