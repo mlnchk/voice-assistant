@@ -35,6 +35,7 @@ class AutoID :
 class MainFrame (wx.Frame):
 
     def __process_path(self, pathname):
+        pathname = pathname.replace(os.sep, '/')
         result = os.path.basename(pathname)
         regexp = glo.Settings['pathname_regexp']
         if regexp[0]:
