@@ -2,6 +2,7 @@
 *.wav
 __pycache__
 .vscode
+*.code-workspace
 build
 dist
 *.spec
