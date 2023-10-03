@@ -7,7 +7,7 @@ lazy-object-proxy==1.4.3
 matplotlib==3.2.1
 mccabe==0.6.1
 numpy==1.18.2
-Pillow==7.1.0
+Pillow==10.0.1
 pycparser==2.20
 pydub==0.23.1
 pylint==2.4.4
